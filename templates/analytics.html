@@ -71,6 +71,7 @@
         .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
         .charts-grid-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-4); margin-bottom: var(--space-8); }
         .badge-custom { font-size: var(--text-xs); font-weight: 600; padding: 0.2em 0.7em; border-radius: var(--radius-md); display: inline-flex; align-items: center; gap: 0.3em; }
+        .badge-best { background: rgba(109,170,69,0.15); color: var(--color-success); border: 1px solid rgba(109,170,69,0.25); }
         .badge-custom-red { background: rgba(221,105,116,0.15); color: var(--color-error); border: 1px solid rgba(221,105,116,0.25); }
         .badge-teal { background: rgba(79,152,163,0.15); color: var(--color-primary); border: 1px solid rgba(79,152,163,0.25); }
         .badge-winner { background: rgba(232,175,52,0.15); color: var(--color-warning); border: 1px solid rgba(232,175,52,0.25); }
@@ -82,9 +83,9 @@
         .h2h-table td.center { text-align: center; }
         .h2h-table tr:last-child td { border-bottom: none; }
         .h2h-table tr.winner-row { background: rgba(79,152,163,0.06); }
+        .metric-val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-text); }
         .metric-win { color: var(--color-primary); font-weight: 700; }
         .metric-lose { color: var(--color-text-muted); font-weight: 400; }
-        .metric-val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-text); }
         .kpi-card.teal-highlight { border-color: rgba(79,152,163,0.3); background: linear-gradient(135deg, rgba(79,152,163,0.08), var(--color-surface)); }
         .hybrid-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
         .hybrid-tile { background: rgba(79,152,163,0.07); border: 1px solid rgba(79,152,163,0.2); border-radius: var(--radius-lg); padding: var(--space-4); text-align: center; }
@@ -107,9 +108,11 @@
         .stat-pill { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); text-align:center; }
         .stat-pill .sp-val { font-size: var(--text-base); font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; }
         .stat-pill .sp-lbl { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
-        .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); font-size: var(--text-xs); }
-        .config-row .lbl { color: var(--color-text-muted); }
-        .config-row .val { color: var(--color-text); font-weight: 600; }
+        .metric-bar-wrap { display:flex; align-items:center; gap: var(--space-3); }
+        .metric-bar-label { font-size: var(--text-xs); color: var(--color-text-muted); width: 130px; flex-shrink:0; }
+        .metric-bar-track { flex:1; height:6px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow:hidden; }
+        .metric-bar-fill  { height:100%; border-radius:99px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+        .metric-bar-value { font-size: var(--text-xs); font-weight:700; color: var(--color-text); width:52px; text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums; }
         @media (max-width: 900px) {
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
             .charts-grid, .charts-grid-bottom { grid-template-columns: 1fr; }
@@ -246,7 +249,7 @@
         </div>
     </div>
 
-    <!-- mAP Ranking -->
+    <!-- mAP Ranking — MAIN, KEPT -->
     <p class="section-label">mAP@50 Ranking — All Models</p>
     <div class="card" style="margin-bottom:var(--space-8)">
         <div class="card-title">
@@ -259,10 +262,8 @@
     </div>
 
     <!-- Head-to-Head -->
-    <p class="section-label">Head-to-Head — YOLO vs Custom Models</p>
+    <p class="section-label">Head-to-Head — YOLO vs Custom Models (145 Test Frames)</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-8)">
-
-        <!-- LEFT: Comparison Table -->
         <div class="card">
             <div class="card-title" style="justify-content:space-between">
                 <span>
@@ -270,7 +271,7 @@
                     Frame-Level Comparison
                 </span>
                 <span class="badge-custom badge-winner">
-                    <i class="fas fa-trophy"></i> 145 Test Frames
+                    <i class="fas fa-trophy"></i> Fair Evaluation
                 </span>
             </div>
             <table class="h2h-table">
@@ -308,10 +309,10 @@
                         <td class="center metric-val">94.4%</td>
                     </tr>
                     <tr>
-                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Localisation</td>
+                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Localisation (bbox)</td>
                         <td class="center metric-win">✅ Yes</td>
                         <td class="center metric-val">✅ Yes</td>
-                        <td class="center metric-lose">⚠️ Weak</td>
+                        <td class="center metric-lose" style="color:var(--color-text-muted)">⚠️ Weak</td>
                     </tr>
                     <tr>
                         <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Architecture</td>
@@ -322,81 +323,73 @@
                     <tr>
                         <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Real-time Speed</td>
                         <td class="center metric-win">✅ Fast</td>
-                        <td class="center metric-lose">⚡ Slower</td>
-                        <td class="center metric-lose">⚡ Slower</td>
+                        <td class="center metric-lose" style="color:var(--color-text-muted)">⚡ Slower</td>
+                        <td class="center metric-lose" style="color:var(--color-text-muted)">⚡ Slower</td>
                     </tr>
                 </tbody>
             </table>
             <div style="margin-top:var(--space-4);padding:var(--space-3) var(--space-4);background:rgba(79,152,163,0.07);border:1px solid rgba(79,152,163,0.2);border-radius:var(--radius-lg);font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.6">
                 <i class="fas fa-info-circle" style="color:var(--color-primary);margin-right:0.4em"></i>
-                YOLOv8s evaluated with mAP@0.5 on bounding box predictions. Custom models evaluated as detectors trained from scratch without pretrained weights.
+                YOLOv8s evaluated with mAP@0.5 on bounding box predictions. CNN+ViT and ViT Standalone evaluated as object detectors trained from scratch without pretrained weights.
             </div>
         </div>
 
-        <!-- RIGHT: Training Config -->
+        <!-- RIGHT CARD: Gap Analysis only (no duplicate bar chart) -->
         <div class="card">
             <div class="card-title">
-                <i class="fas fa-sliders-h" style="color:var(--color-primary)"></i>
-                Training Configuration
+                <i class="fas fa-signal" style="color:var(--color-primary)"></i>
+                mAP Gap Analysis
             </div>
-            <div style="display:flex;flex-direction:column;gap:var(--space-3)">
-
-                <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)">
-                    <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-success);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
-                        <i class="fas fa-bolt me-1"></i>YOLO Models (×6)
-                    </div>
-                    <div class="config-row">
-                        <span class="lbl">Epochs</span><span class="val">100</span>
-                        <span class="lbl">Image Size</span><span class="val">640×640</span>
-                        <span class="lbl">Batch Size</span><span class="val">16</span>
-                        <span class="lbl">Optimizer</span><span class="val">SGD</span>
-                        <span class="lbl">Pretrained</span><span class="val" style="color:var(--color-success)">✅ Yes</span>
-                        <span class="lbl">Dataset</span><span class="val">~2.2K images</span>
-                    </div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-4);margin-bottom:var(--space-6)">
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">YOLOv8s</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:86.44%;background:#6daa45"></div></div>
+                    <span class="metric-bar-value">86.44%</span>
                 </div>
-
-                <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)">
-                    <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-primary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
-                        <i class="fas fa-brain me-1"></i>CNN+ViT Hybrid
-                    </div>
-                    <div class="config-row">
-                        <span class="lbl">Epochs</span><span class="val">20</span>
-                        <span class="lbl">Image Size</span><span class="val">224×224</span>
-                        <span class="lbl">Batch Size</span><span class="val">32</span>
-                        <span class="lbl">Optimizer</span><span class="val">Adam</span>
-                        <span class="lbl">Pretrained</span><span class="val" style="color:var(--color-error)">❌ No</span>
-                        <span class="lbl">Backbone</span><span class="val">ResNet-50</span>
-                    </div>
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">YOLOv11m</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:84.79%;background:#d163a7"></div></div>
+                    <span class="metric-bar-value">84.79%</span>
                 </div>
-
-                <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)">
-                    <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-purple);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
-                        <i class="fas fa-atom me-1"></i>ViT Standalone
-                    </div>
-                    <div class="config-row">
-                        <span class="lbl">Epochs</span><span class="val">50</span>
-                        <span class="lbl">Image Size</span><span class="val">224×224</span>
-                        <span class="lbl">Patch Size</span><span class="val">16×16</span>
-                        <span class="lbl">Optimizer</span><span class="val">Adam</span>
-                        <span class="lbl">Pretrained</span><span class="val" style="color:var(--color-error)">❌ No</span>
-                        <span class="lbl">Parameters</span><span class="val">5.05M</span>
-                    </div>
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">YOLOv11s</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:83.20%;background:#fdab43"></div></div>
+                    <span class="metric-bar-value">83.20%</span>
                 </div>
-
-                <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)">
-                    <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-error);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
-                        <i class="fas fa-microchip me-1"></i>Custom Grid Detector
-                    </div>
-                    <div class="config-row">
-                        <span class="lbl">Epochs</span><span class="val">18 (early stop)</span>
-                        <span class="lbl">Grid</span><span class="val">13×13</span>
-                        <span class="lbl">Anchor Boxes</span><span class="val" style="color:var(--color-error)">❌ None</span>
-                        <span class="lbl">Pretrained</span><span class="val" style="color:var(--color-error)">❌ No</span>
-                        <span class="lbl">Stopped by</span><span class="val" style="color:var(--color-warning)">Overfitting</span>
-                        <span class="lbl">Role</span><span class="val">Baseline only</span>
-                    </div>
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">YOLOv10s</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:82.76%;background:#a86fdf"></div></div>
+                    <span class="metric-bar-value">82.76%</span>
                 </div>
-
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">YOLOv10m</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:82.16%;background:#4f98a3"></div></div>
+                    <span class="metric-bar-value">82.16%</span>
+                </div>
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">YOLOv8m</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:75.12%;background:#5591c7"></div></div>
+                    <span class="metric-bar-value">75.12%</span>
+                </div>
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">Custom Grid</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:62.8%;background:#dd6974"></div></div>
+                    <span class="metric-bar-value">62.80%</span>
+                </div>
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">CNN+ViT Hybrid</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:24.07%;background:#e8af34"></div></div>
+                    <span class="metric-bar-value">24.07%</span>
+                </div>
+                <div class="metric-bar-wrap">
+                    <span class="metric-bar-label">ViT Standalone</span>
+                    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:0.76%;background:#7ec8d8"></div></div>
+                    <span class="metric-bar-value">0.76%</span>
+                </div>
+            </div>
+            <div style="padding:var(--space-3) var(--space-4);background:rgba(79,152,163,0.06);border:1px solid rgba(79,152,163,0.15);border-radius:var(--radius-lg);font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.6">
+                <i class="fas fa-info-circle" style="color:var(--color-primary);margin-right:0.4em"></i>
+                From-scratch models trained without pretrained weights on ~2.2K images vs. YOLO's large-scale pretraining. Hybrid outperforms pure ViT by 23.31% mAP — confirming the benefit of CNN spatial features for localisation.
             </div>
         </div>
     </div>
@@ -505,7 +498,7 @@
                 </div>
                 <div style="padding:var(--space-3) var(--space-4);background:rgba(168,111,223,0.06);border:1px solid rgba(168,111,223,0.15);border-radius:var(--radius-lg);font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.6;margin-top:var(--space-3)">
                     <i class="fas fa-info-circle" style="color:var(--color-purple);margin-right:0.4em"></i>
-                    Pure patch-embedding + transformer encoder + detection head. High classification accuracy (94.4%) but low mAP (0.76%) — the CLS token loses spatial precision needed for tight bounding box regression.
+                    Pure patch-embedding + transformer encoder + detection head. High classification accuracy (94.4%) but low mAP (0.76%) — the CLS token aggregates global features well for classification but loses spatial precision needed for tight bounding box regression.
                 </div>
             </div>
         </div>
@@ -533,7 +526,7 @@
         <div id="lossStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--space-4)"></div>
     </div>
 
-    <!-- Custom Grid Detector -->
+    <!-- Custom Grid Detector Baseline -->
     <p class="section-label">Custom Grid Detector — Baseline Model</p>
     <div class="card" style="margin-bottom:var(--space-8)">
         <div class="card-title" style="justify-content:space-between">
@@ -610,56 +603,80 @@
         [62.8,  55.6,  51.8,  52.8 ]
     ];
 
-    // Benchmark
+    // Benchmark bar chart
     new Chart(document.getElementById('benchmarkChart'), {
-        type:'bar',
-        data:{
-            labels:allModels,
-            datasets:[
-                {label:'mAP@50',    data:radarData.map(d=>d[0]), backgroundColor:'rgba(109,170,69,0.8)' },
-                {label:'Precision', data:radarData.map(d=>d[1]), backgroundColor:'rgba(85,145,199,0.8)' },
-                {label:'Recall',    data:radarData.map(d=>d[2]), backgroundColor:'rgba(232,175,52,0.8)' },
-                {label:'F1 Score',  data:radarData.map(d=>d[3]), backgroundColor:'rgba(168,111,223,0.8)'}
+        type: 'bar',
+        data: {
+            labels: allModels,
+            datasets: [
+                { label:'mAP@50',    data: radarData.map(d=>d[0]), backgroundColor:'rgba(109,170,69,0.8)'  },
+                { label:'Precision', data: radarData.map(d=>d[1]), backgroundColor:'rgba(85,145,199,0.8)'  },
+                { label:'Recall',    data: radarData.map(d=>d[2]), backgroundColor:'rgba(232,175,52,0.8)'  },
+                { label:'F1 Score',  data: radarData.map(d=>d[3]), backgroundColor:'rgba(168,111,223,0.8)' }
             ]
         },
-        options:{
-            responsive:true,maintainAspectRatio:false,
-            plugins:{legend:{position:'top',labels:{color:'rgba(232,233,240,0.8)',boxWidth:12,padding:16}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
-            scales:{x:{ticks:{color:'rgba(232,233,240,0.7)',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'}},y:{min:0,max:100,ticks:{color:'rgba(232,233,240,0.7)',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.06)'}}}
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins:{
+                legend:{position:'top',labels:{color:'rgba(232,233,240,0.8)',boxWidth:12,padding:16}},
+                tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}
+            },
+            scales:{
+                x:{ticks:{color:'rgba(232,233,240,0.7)',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'}},
+                y:{min:0,max:100,ticks:{color:'rgba(232,233,240,0.7)',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.06)'}}
+            }
         }
     });
 
-    // Gauge
-    new Chart(document.getElementById('mapGauge'),{
+    // mAP Gauge
+    new Chart(document.getElementById('mapGauge'), {
         type:'doughnut',
         data:{labels:['mAP@50','Remaining'],datasets:[{data:[86.44,13.56],backgroundColor:['#6daa45','#1c1f2a'],borderWidth:0}]},
         options:{circumference:180,rotation:270,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'75%'},
-        plugins:[{id:'centerText',beforeDraw(chart){
-            const{ctx,chartArea:{top,width,height}}=chart;
-            ctx.save();
-            ctx.font="bold 28px 'Satoshi',Inter,sans-serif";ctx.fillStyle='#6daa45';ctx.textAlign='center';
-            ctx.fillText('86.4%',width/2,top+height*0.78);
-            ctx.font="13px 'Satoshi',Inter,sans-serif";ctx.fillStyle='rgba(232,233,240,0.65)';
-            ctx.fillText('mAP@50',width/2,top+height*0.96);ctx.restore();
-        }}]
+        plugins:[{
+            id:'centerText',
+            beforeDraw(chart){
+                const{ctx,chartArea:{top,width,height}}=chart;
+                ctx.save();
+                ctx.font="bold 28px 'Satoshi',Inter,sans-serif";
+                ctx.fillStyle='#6daa45';ctx.textAlign='center';
+                ctx.fillText('86.4%',width/2,top+height*0.78);
+                ctx.font="13px 'Satoshi',Inter,sans-serif";
+                ctx.fillStyle='rgba(232,233,240,0.65)';
+                ctx.fillText('mAP@50',width/2,top+height*0.96);
+                ctx.restore();
+            }
+        }]
     });
 
     // Radar
-    new Chart(document.getElementById('radarChart'),{
+    new Chart(document.getElementById('radarChart'), {
         type:'radar',
         data:{
             labels:['mAP@50','Precision','Recall','F1 Score'],
-            datasets:radarData.map((d,i)=>({label:allModels[i],data:d,borderColor:modelColors[i].border,backgroundColor:modelColors[i].bg,borderWidth:i>=6?3:1.5,pointBackgroundColor:modelColors[i].border,pointRadius:i>=6?5:3}))
+            datasets:radarData.map((d,i)=>({
+                label:allModels[i],data:d,
+                borderColor:modelColors[i].border,
+                backgroundColor:modelColors[i].bg,
+                borderWidth:i>=6?3:1.5,
+                pointBackgroundColor:modelColors[i].border,
+                pointRadius:i>=6?5:3
+            }))
         },
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:100,ticks:{stepSize:25,color:'rgba(232,233,240,0.4)',backdropColor:'transparent',font:{size:10}},grid:{color:'rgba(255,255,255,0.08)'},angleLines:{color:'rgba(255,255,255,0.08)'},pointLabels:{color:'rgba(232,233,240,0.85)',font:{size:13,weight:'600'}}}}}
+        options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{r:{min:0,max:100,ticks:{stepSize:25,color:'rgba(232,233,240,0.4)',backdropColor:'transparent',font:{size:10}},grid:{color:'rgba(255,255,255,0.08)'},angleLines:{color:'rgba(255,255,255,0.08)'},pointLabels:{color:'rgba(232,233,240,0.85)',font:{size:13,weight:'600'}}}}
+        }
     });
 
     // Legend
-    const legendEl=document.getElementById('modelLegend');
+    const legendEl = document.getElementById('modelLegend');
     allModels.forEach((name,i)=>{
         const row=document.createElement('div');
         const isCustom=i>=6;
-        row.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:8px;transition:background 0.15s;cursor:default'+(isCustom?';background:rgba(79,152,163,0.06);border:1px solid rgba(79,152,163,0.15)':'');
+        row.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:8px;transition:background 0.15s;cursor:default'
+            +(isCustom?';background:rgba(79,152,163,0.06);border:1px solid rgba(79,152,163,0.15)':'');
         row.innerHTML='<span style="width:12px;height:12px;border-radius:50%;background:'+modelColors[i].border+';flex-shrink:0"></span>'
             +'<span style="font-size:var(--text-sm);color:'+(isCustom?'var(--color-text)':'var(--color-text-muted)')+'">'+name+'</span>'
             +(isCustom?'<span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--color-primary)">CUSTOM</span>':'');
@@ -668,41 +685,57 @@
         legendEl.appendChild(row);
     });
 
-    // Ranking
-    const rankSorted=allModels.map((m,i)=>({name:m,map:radarData[i][0],color:modelColors[i].border})).sort((a,b)=>b.map-a.map);
+    // mAP Ranking — horizontal bar (MAIN chart)
+    const rankSorted = allModels.map((m,i)=>({name:m,map:radarData[i][0],color:modelColors[i].border})).sort((a,b)=>b.map-a.map);
     new Chart(document.getElementById('rankChart'),{
         type:'bar',
-        data:{labels:rankSorted.map(d=>d.name),datasets:[{label:'mAP@50 (%)',data:rankSorted.map(d=>d.map),backgroundColor:rankSorted.map(d=>d.color),borderRadius:6,borderSkipped:false}]},
-        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` mAP@50: ${ctx.raw}%`}}},scales:{x:{min:0,max:100,ticks:{color:'rgba(232,233,240,0.6)',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.06)'}},y:{ticks:{color:'rgba(232,233,240,0.85)',font:{size:12}},grid:{display:false}}}}
+        data:{
+            labels:rankSorted.map(d=>d.name),
+            datasets:[{label:'mAP@50 (%)',data:rankSorted.map(d=>d.map),backgroundColor:rankSorted.map(d=>d.color),borderRadius:6,borderSkipped:false}]
+        },
+        options:{
+            indexAxis:'y',
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` mAP@50: ${ctx.raw}%`}}},
+            scales:{
+                x:{min:0,max:100,ticks:{color:'rgba(232,233,240,0.6)',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.06)'}},
+                y:{ticks:{color:'rgba(232,233,240,0.85)',font:{size:12}},grid:{display:false}}
+            }
+        }
     });
 
     // Hybrid accuracy
+    const hybridTrainAcc=[96.5,97.8,98.1,98.4,98.6,98.7,98.9,99.0,99.1,99.2,99.3,99.4,99.5,99.5,99.6,99.6,99.7,99.7,99.8,99.8];
+    const hybridValAcc  =[97.2,98.25,97.9,97.8,97.5,97.6,97.4,97.5,97.3,97.4,97.3,97.2,97.3,97.1,97.2,97.1,97.0,97.1,97.0,97.0];
     new Chart(document.getElementById('hybridAccChart'),{
         type:'line',
         data:{labels:Array.from({length:20},(_,i)=>'Ep '+(i+1)),datasets:[
-            {label:'Train Acc',data:[96.5,97.8,98.1,98.4,98.6,98.7,98.9,99.0,99.1,99.2,99.3,99.4,99.5,99.5,99.6,99.6,99.7,99.7,99.8,99.8],borderColor:'#4f98a3',backgroundColor:'rgba(79,152,163,0.1)',fill:true,tension:0.4,pointRadius:0,borderWidth:2.5},
-            {label:'Val Acc',  data:[97.2,98.25,97.9,97.8,97.5,97.6,97.4,97.5,97.3,97.4,97.3,97.2,97.3,97.1,97.2,97.1,97.0,97.1,97.0,97.0],borderColor:'#e8af34',backgroundColor:'rgba(232,175,52,0.06)',fill:true,tension:0.4,pointRadius:0,borderWidth:2}
+            {label:'Train Acc',data:hybridTrainAcc,borderColor:'#4f98a3',backgroundColor:'rgba(79,152,163,0.1)',fill:true,tension:0.4,pointRadius:0,borderWidth:2.5},
+            {label:'Val Acc',  data:hybridValAcc,  borderColor:'#e8af34',backgroundColor:'rgba(232,175,52,0.06)',fill:true,tension:0.4,pointRadius:0,borderWidth:2}
         ]},
         options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'rgba(232,233,240,0.7)',boxWidth:10,padding:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toFixed(2)}%`}}},scales:{x:{ticks:{color:'rgba(232,233,240,0.4)',font:{size:9},maxTicksLimit:10},grid:{display:false}},y:{min:94,max:100,ticks:{color:'rgba(232,233,240,0.5)',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.05)'}}}}
     });
 
     // ViT loss
+    const vitEpochs=[5,10,15,20,25,30,35,40,45,50];
+    const vitTrain =[0.3377,0.2694,0.2445,0.2060,0.1600,0.1299,0.1183,0.0899,0.0816,0.0789];
+    const vitVal   =[0.4043,0.3859,0.2992,0.3777,0.3250,0.2618,0.2277,0.2986,0.3064,0.3217];
     new Chart(document.getElementById('vitLossChart'),{
         type:'line',
-        data:{labels:[5,10,15,20,25,30,35,40,45,50].map(e=>'Ep '+e),datasets:[
-            {label:'Train Loss',data:[0.3377,0.2694,0.2445,0.2060,0.1600,0.1299,0.1183,0.0899,0.0816,0.0789],borderColor:'#a86fdf',backgroundColor:'rgba(168,111,223,0.1)',fill:true,tension:0.4,pointRadius:3,borderWidth:2.5},
-            {label:'Val Loss',  data:[0.4043,0.3859,0.2992,0.3777,0.3250,0.2618,0.2277,0.2986,0.3064,0.3217],borderColor:'#dd6974',backgroundColor:'rgba(221,105,116,0.07)',fill:true,tension:0.4,pointRadius:ctx=>ctx.dataIndex===6?6:2,pointBackgroundColor:'#dd6974',borderWidth:2}
+        data:{labels:vitEpochs.map(e=>'Ep '+e),datasets:[
+            {label:'Train Loss',data:vitTrain,borderColor:'#a86fdf',backgroundColor:'rgba(168,111,223,0.1)',fill:true,tension:0.4,pointRadius:3,borderWidth:2.5},
+            {label:'Val Loss',  data:vitVal,  borderColor:'#dd6974',backgroundColor:'rgba(221,105,116,0.07)',fill:true,tension:0.4,pointRadius:ctx=>ctx.dataIndex===6?6:2,pointBackgroundColor:'#dd6974',borderWidth:2}
         ]},
         options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'rgba(232,233,240,0.7)',boxWidth:10,padding:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toFixed(4)}`}}},scales:{x:{ticks:{color:'rgba(232,233,240,0.5)',font:{size:10}},grid:{display:false}},y:{ticks:{color:'rgba(232,233,240,0.5)',font:{size:10},callback:v=>v.toFixed(2)},grid:{color:'rgba(255,255,255,0.04)'}}}}
     });
 
-    // YOLO tabs
+    // YOLO Loss tabs
     function makeEpochs(n){return Array.from({length:n},(_,i)=>'Ep '+(i+1));}
     const yoloModels={
-        yolov8s: {label:'YOLOv8s', color:'#6daa45',epochs:100,bestEpoch:100,bestVal:'0.52',mAP:'86.44',F1:'82.37',
+        yolov8s: {label:'YOLOv8s',color:'#6daa45',epochs:100,bestEpoch:100,bestVal:'0.52',mAP:'86.44',F1:'82.37',
             train:[2.8,2.31,1.97,1.72,1.53,1.38,1.26,1.16,1.08,1.01,0.95,0.90,0.86,0.82,0.79,0.76,0.73,0.71,0.69,0.67,0.65,0.63,0.62,0.60,0.59,0.58,0.57,0.56,0.55,0.54,0.53,0.52,0.51,0.51,0.50,0.50,0.49,0.49,0.48,0.48,0.47,0.47,0.46,0.46,0.45,0.45,0.44,0.44,0.44,0.43,0.43,0.42,0.42,0.42,0.41,0.41,0.41,0.40,0.40,0.40,0.39,0.39,0.39,0.39,0.38,0.38,0.38,0.37,0.37,0.37,0.37,0.36,0.36,0.36,0.36,0.35,0.35,0.35,0.35,0.35,0.34,0.34,0.34,0.34,0.33,0.33,0.33,0.33,0.33,0.32,0.32,0.32,0.32,0.32,0.31,0.31,0.31,0.31,0.31,0.30],
             val: [2.60,2.20,1.89,1.66,1.48,1.34,1.23,1.14,1.07,1.01,0.96,0.92,0.88,0.85,0.82,0.80,0.78,0.76,0.74,0.73,0.72,0.71,0.70,0.69,0.68,0.68,0.67,0.67,0.66,0.66,0.65,0.65,0.65,0.64,0.64,0.64,0.63,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.61,0.61,0.61,0.61,0.61,0.60,0.60,0.60,0.60,0.60,0.59,0.59,0.59,0.59,0.59,0.58,0.58,0.58,0.58,0.58,0.58,0.57,0.57,0.57,0.57,0.57,0.57,0.56,0.56,0.56,0.56,0.56,0.56,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.54,0.54,0.54,0.54,0.54,0.54,0.54,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.52,0.52]},
-        yolov8m: {label:'YOLOv8m', color:'#5591c7',epochs:100,bestEpoch:100,bestVal:'0.60',mAP:'75.12',F1:'75.04',
+        yolov8m: {label:'YOLOv8m',color:'#5591c7',epochs:100,bestEpoch:100,bestVal:'0.60',mAP:'75.12',F1:'75.04',
             train:[3.1,2.55,2.18,1.90,1.69,1.53,1.40,1.29,1.20,1.12,1.06,1.00,0.95,0.91,0.87,0.84,0.81,0.78,0.76,0.74,0.72,0.70,0.68,0.67,0.65,0.64,0.63,0.62,0.61,0.60,0.59,0.58,0.57,0.56,0.56,0.55,0.54,0.54,0.53,0.52,0.52,0.51,0.51,0.50,0.50,0.49,0.49,0.48,0.48,0.48,0.47,0.47,0.46,0.46,0.46,0.45,0.45,0.44,0.44,0.44,0.43,0.43,0.43,0.42,0.42,0.42,0.41,0.41,0.41,0.41,0.40,0.40,0.40,0.39,0.39,0.39,0.39,0.38,0.38,0.38,0.38,0.37,0.37,0.37,0.37,0.36,0.36,0.36,0.36,0.36,0.35,0.35,0.35,0.35,0.35,0.34,0.34,0.34,0.34,0.34],
             val: [2.90,2.42,2.08,1.83,1.63,1.48,1.36,1.26,1.18,1.11,1.06,1.01,0.97,0.93,0.90,0.88,0.86,0.84,0.82,0.81,0.80,0.79,0.78,0.77,0.76,0.76,0.75,0.75,0.74,0.74,0.74,0.73,0.73,0.73,0.72,0.72,0.72,0.72,0.71,0.71,0.71,0.71,0.70,0.70,0.70,0.70,0.69,0.69,0.69,0.69,0.69,0.68,0.68,0.68,0.68,0.68,0.67,0.67,0.67,0.67,0.67,0.67,0.66,0.66,0.66,0.66,0.66,0.65,0.65,0.65,0.65,0.65,0.65,0.64,0.64,0.64,0.64,0.64,0.64,0.63,0.63,0.63,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.61,0.61,0.61,0.61,0.61,0.61,0.61,0.60]},
         yolov10s:{label:'YOLOv10s',color:'#a86fdf',epochs:100,bestEpoch:100,bestVal:'0.53',mAP:'82.76',F1:'77.33',

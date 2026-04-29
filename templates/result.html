@@ -1,216 +1,164 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>CheatSpot Result</title>
+    <title>CheatSpot Result</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #1a1a2e;
+            color: white;
+        }
 
-<style>
-/* ========================
-   GLOBAL
-======================== */
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background: #1a1a2e;
-    color: white;
-}
+        h1 {
+            color: #e94560;
+            margin: 30px;
+        }
 
-h1 {
-    color: #e94560;
-    margin: 30px;
-}
+        .result-media {
+            max-width: 80%;
+            max-height: 65vh;
+            border: 3px solid #e94560;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: block;
+        }
 
-/* ========================
-   MEDIA
-======================== */
-.result-media {
-    max-width: 80%;
-    max-height: 65vh;
-    border: 3px solid #e94560;
-    border-radius: 10px;
-    margin: 20px auto;
-    display: block;
-}
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 10px;
+            font-size: 16px;
+            display: inline-block;
+        }
 
-/* ========================
-   BUTTONS
-======================== */
-.btn {
-    background: #007bff;
-    color: white;
-    padding: 12px 25px;
-    border-radius: 8px;
-    text-decoration: none;
-    margin: 10px;
-    font-size: 16px;
-    display: inline-block;
-    border: none;
-    cursor: pointer;
-}
+        .btn-green {
+            background: #28a745;
+        }
 
-.btn-green { background: #28a745; }
-.btn-xai   { background: #ff6b35; }
+        .btn-xai {
+            background: #ff6b35;
+        }
 
-/* ========================
-   ALERTS
-======================== */
-.alerts-box {
-    background: #2d1a1a;
-    border: 1px solid #e94560;
-    padding: 15px;
-    margin: 20px auto;
-    max-width: 600px;
-    border-radius: 8px;
-    text-align: left;
-}
+        .alerts-box {
+            background: #2d1a1a;
+            border: 1px solid #e94560;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 600px;
+            border-radius: 8px;
+            text-align: left;
+        }
 
-.alert-item {
-    padding: 6px 0;
-    border-bottom: 1px solid #333;
-    color: #ff6b6b;
-}
+        .alert-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+            color: #ff6b6b;
+        }
 
-/* ========================
-   XAI
-======================== */
-.xai-section {
-    margin: 20px auto;
-    max-width: 80%;
-}
+        .xai-section {
+            margin: 20px auto;
+            max-width: 80%;
+        }
 
-.xai-section img {
-    max-width: 100%;
-    border: 3px solid #ff6b35;
-    border-radius: 10px;
-    margin-top: 15px;
-}
+        .xai-section img {
+            max-width: 100%;
+            border: 3px solid #ff6b35;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
 
-.xai-label {
-    color: #ff6b35;
-    font-size: 14px;
-    margin-top: 8px;
-}
+        .xai-label {
+            color: #ff6b35;
+            font-size: 14px;
+            margin-top: 8px;
+        }
 
-#xai-loading {
-    display: none;
-    color: #ff6b35;
-    margin: 10px;
-}
-</style>
+        #xai-loading {
+            display: none;
+            color: #ff6b35;
+            font-size: 16px;
+            margin: 10px;
+        }
+    </style>
 </head>
-
 <body>
+    <h1>🎥 CheatSpot Analysis</h1>
 
-<h1>🎥 CheatSpot Analysis</h1>
+    {% if filetype == 'video' %}
+        <video src="/output/{{ filename }}" controls autoplay loop class="result-media">
+            Your browser doesn't support video.
+        </video>
+    {% else %}
+        <img src="/output/{{ filename }}" alt="Result" class="result-media">
+    {% endif %}
 
-<!-- ========================
-     RESULT MEDIA
-======================== -->
-{% if filetype == 'video' %}
-<video src="/output/{{ filename }}" controls autoplay loop class="result-media">
-    Your browser doesn't support video.
-</video>
-{% else %}
-<img src="/output/{{ filename }}" alt="Result" class="result-media">
-{% endif %}
+    <br>
 
-<!-- ========================
-     ACTION BUTTONS
-======================== -->
-<div>
     <a href="/upload" class="btn">📤 Upload Another</a>
     <a href="/" class="btn btn-green">🏠 Dashboard</a>
 
     {% if filetype == 'image' %}
-    <button class="btn btn-xai" onclick="loadGradCAM('{{ filename }}')">
-        🧠 Explain with GradCAM
-    </button>
+        <button class="btn btn-xai" onclick="loadGradCAM('{{ filename }}')">
+            🧠 Explain with GradCAM
+        </button>
     {% endif %}
-</div>
 
-<!-- ========================
-     XAI LOADING
-======================== -->
-<div id="xai-loading">
-    ⏳ Generating GradCAM heatmap...
-</div>
+    <div id="xai-loading">⏳ Generating GradCAM heatmap...</div>
 
-<!-- ========================
-     XAI RESULT
-======================== -->
-<div id="xai-result" class="xai-section" style="display:none;">
-    <h2 style="color:#ff6b35;">🔍 GradCAM Explanation</h2>
-    <p style="color:#aaa;">
-        Red/yellow areas = where model focused to detect cheating
-    </p>
-    <img id="xai-img" src="" alt="GradCAM Result">
-    <p class="xai-label">
-        🔴 High &nbsp;|&nbsp; 🟡 Medium &nbsp;|&nbsp; 🔵 Low attention
-    </p>
-</div>
+    <div class="xai-section" id="xai-result" style="display:none;">
+        <h2 style="color:#ff6b35;">🔍 GradCAM Explanation</h2>
+        <p style="color:#aaa;">
+            Red/yellow areas = where model focused to detect cheating
+        </p>
+        <img id="xai-img" src="" alt="GradCAM Result">
+        <p class="xai-label">
+            🔴 Red = High attention &nbsp;|&nbsp;
+            🟡 Yellow = Medium attention &nbsp;|&nbsp;
+            🔵 Blue = Low attention
+        </p>
+    </div>
 
-<!-- ========================
-     ALERTS
-======================== -->
-<div id="alerts-box" class="alerts-box" style="display:none;">
-    <h3>🚨 Cheating Alerts</h3>
-    <div id="alerts-list"></div>
-</div>
+    <div id="alerts-box" class="alerts-box" style="display:none;">
+        <h3>🚨 Cheating Alerts</h3>
+        <div id="alerts-list"></div>
+    </div>
 
-<!-- ========================
-     JS
-======================== -->
-<script>
+    <script>
+        fetch("/api/alerts")
+            .then((r) => r.json())
+            .then((alerts) => {
+                if (alerts.length > 0) {
+                    document.getElementById("alerts-box").style.display = "block";
 
-/* ========================
-   LOAD ALERTS
-======================== */
-fetch('/api/alerts')
-    .then(res => res.json())
-    .then(alerts => {
-        if (!alerts.length) return;
+                    let html = "";
+                    alerts.forEach((a) => {
+                        html += `<div class="alert-item">⏰ ${a.time} — ${a.message} (${a.conf}%)</div>`;
+                    });
 
-        const box = document.getElementById('alerts-box');
-        const list = document.getElementById('alerts-list');
+                    document.getElementById("alerts-list").innerHTML = html;
+                }
+            });
 
-        box.style.display = 'block';
+        function loadGradCAM(filename) {
+            document.getElementById("xai-loading").style.display = "block";
+            document.getElementById("xai-result").style.display = "none";
 
-        list.innerHTML = alerts.map(a => `
-            <div class="alert-item">
-                ⏰ ${a.time} — ${a.message} (${a.conf}%)
-            </div>
-        `).join('');
-    })
-    .catch(err => console.error('Alerts error:', err));
-
-
-/* ========================
-   GRADCAM
-======================== */
-function loadGradCAM(filename) {
-    const loading = document.getElementById('xai-loading');
-    const result  = document.getElementById('xai-result');
-    const img     = document.getElementById('xai-img');
-
-    loading.style.display = 'block';
-    result.style.display = 'none';
-
-    fetch(`/explain/${filename}`)
-        .then(res => res.json())
-        .then(data => {
-            if (!data.gradcam_url) throw new Error('Invalid response');
-
-            img.src = data.gradcam_url;
-            loading.style.display = 'none';
-            result.style.display = 'block';
-        })
-        .catch(err => {
-            loading.style.display = 'none';
-            alert('GradCAM failed: ' + err.message);
-        });
-}
-
-</script>
-
+            fetch(`/explain/${filename}`)
+                .then((r) => r.json())
+                .then((data) => {
+                    document.getElementById("xai-loading").style.display = "none";
+                    document.getElementById("xai-img").src = data.gradcam_url;
+                    document.getElementById("xai-result").style.display = "block";
+                })
+                .catch((err) => {
+                    document.getElementById("xai-loading").style.display = "none";
+                    alert("GradCAM failed: " + err);
+                });
+        }
+    </script>
 </body>
 </html>

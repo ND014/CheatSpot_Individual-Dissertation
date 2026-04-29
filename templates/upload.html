@@ -1,307 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheatSpot - Upload Media</title>
 
-<title>CheatSpot - Upload Media</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<!-- Libraries -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: "Inter", sans-serif;
+        }
 
-<style>
-/* ========================
-   GLOBAL
-======================== */
-* { font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
 
-body {
-    background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    color: white;
-}
+        .upload-card {
+            background: rgba(20, 25, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
 
-/* ========================
-   CARD
-======================== */
-.upload-card {
-    background: rgba(20, 25, 40, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 24px;
-    padding: 48px;
-    max-width: 520px;
-    width: 100%;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-    text-align: center;
-}
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
 
-.logo {
-    font-size: 2.2rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+        .upload-area {
+            border: 2px dashed rgba(102, 126, 234, 0.6);
+            border-radius: 16px;
+            padding: 48px 24px;
+            margin: 24px 0;
+            background: rgba(102, 126, 234, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
 
-/* ========================
-   UPLOAD AREA
-======================== */
-.upload-area {
-    border: 2px dashed rgba(102,126,234,0.6);
-    border-radius: 16px;
-    padding: 48px 24px;
-    margin: 24px 0;
-    background: rgba(102,126,234,0.05);
-    cursor: pointer;
-    transition: 0.3s;
-    position: relative;
-}
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.12);
+            transform: scale(1.02);
+        }
 
-.upload-area:hover,
-.upload-area.dragover {
-    border-color: #764ba2;
-    background: rgba(118,75,162,0.12);
-    transform: scale(1.02);
-}
+        .upload-area.dragover::after {
+            content: "Drop it here!";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #a78bfa;
+            font-weight: 700;
+            font-size: 1.3rem;
+            pointer-events: none;
+        }
 
-.upload-area.dragover::after {
-    content: "Drop it here!";
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    color: #a78bfa;
-    font-weight: 700;
-    font-size: 1.3rem;
-}
+        input[type="file"] {
+            display: none;
+        }
 
-input[type="file"] { display: none; }
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 48px;
+            border-radius: 50px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            width: 100%;
+        }
 
-/* ========================
-   BUTTON
-======================== */
-.submit-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border: none;
-    padding: 14px;
-    border-radius: 50px;
-    font-weight: 600;
-    width: 100%;
-    transition: 0.3s;
-    box-shadow: 0 8px 25px rgba(102,126,234,0.4);
-}
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+        }
 
-.submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(102,126,234,0.6);
-}
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-.submit-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
+        .progress-wrap {
+            display: none;
+            margin-top: 20px;
+        }
 
-/* ========================
-   PROGRESS
-======================== */
-.progress-wrap { display: none; margin-top: 20px; }
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+        }
 
-.progress {
-    height: 8px;
-    border-radius: 4px;
-    background: rgba(255,255,255,0.1);
-}
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
 
-.progress-bar {
-    background: linear-gradient(90deg, #667eea, #764ba2);
-}
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 28px;
+            text-align: left;
+        }
 
-/* ========================
-   FEATURES
-======================== */
-.feature-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 28px;
-    text-align: left;
-}
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+        }
 
-.feature-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: rgba(255,255,255,0.6);
-    font-size: 0.85rem;
-}
+        .feature-item i {
+            color: #667eea;
+            width: 16px;
+        }
 
-.feature-item i {
-    color: #667eea;
-    width: 16px;
-}
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
 
-/* ========================
-   MISC
-======================== */
-.back-link {
-    display: inline-block;
-    margin-top: 20px;
-    color: #667eea;
-    text-decoration: none;
-}
+        .back-link:hover {
+            color: #a78bfa;
+        }
 
-.back-link:hover { color: #a78bfa; }
-
-#fileSelectedName {
-    color: #a78bfa;
-    font-size: 0.9rem;
-    margin-top: 8px;
-    min-height: 20px;
-}
-</style>
+        #fileSelectedName {
+            color: #a78bfa;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            min-height: 20px;
+        }
+    </style>
 </head>
-
 <body>
-
-<div class="upload-card">
-
-    <!-- Header -->
-    <div class="logo">
-        <i class="fas fa-eye-slash me-2"></i>CheatSpot
-    </div>
-
-    <h4 class="fw-semibold">Upload Image or Video</h4>
-    <p class="text-white-50 small mb-0">
-        YOLOv8s | mAP@50: 86.4% | Conf: 0.25
-    </p>
-
-    <!-- Form -->
-    <form method="POST" action="/upload" enctype="multipart/form-data" id="uploadForm">
-
-        <!-- Upload Area -->
-        <div class="upload-area" id="uploadArea">
-            <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
-
-            <p>Click or drag your file here</p>
-            <p id="fileInfo" class="text-white-50 small">
-                Supports JPG, PNG, MP4 (max 100MB)
-            </p>
-
-            <div id="fileSelectedName"></div>
-
-            <input type="file" id="fileInput" name="file" accept="image/*,video/*" required>
+    <div class="upload-card">
+        <div class="logo">
+            <i class="fas fa-eye-slash me-2"></i>CheatSpot
         </div>
 
-        <!-- Button -->
-        <button type="submit" class="submit-btn" id="uploadBtn">
-            <i class="fas fa-search me-2"></i>Analyse Cheating
-        </button>
+        <h4 class="mb-1 fw-semibold">Upload Image or Video</h4>
 
-        <!-- Progress -->
-        <div class="progress-wrap" id="progressWrap">
-            <div class="progress">
-                <div class="progress-bar" id="progressFill"></div>
+        <p style="color: rgba(255,255,255,0.45); font-size: 0.9rem;" class="mb-0">
+            Powered by YOLOv8s &nbsp;|&nbsp; mAP@50: 86.4% &nbsp;|&nbsp; Conf: 0.25
+        </p>
+
+        <form method="POST" action="/upload" enctype="multipart/form-data" id="uploadForm">
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: #667eea;"></i>
+
+                <p style="font-size: 1.05rem; color: rgba(255,255,255,0.8); margin-bottom: 6px;">
+                    Click or drag your file here
+                </p>
+
+                <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;" id="fileInfo">
+                    Supports JPG, PNG, MP4 (max 100MB)
+                </p>
+
+                <div id="fileSelectedName"></div>
+
+                <input
+                    type="file"
+                    id="fileInput"
+                    name="file"
+                    accept="image/*,video/*"
+                    required
+                >
             </div>
-            <small class="text-white-50">
-                <i class="fas fa-spinner fa-spin me-1"></i>
-                Processing with YOLOv8s...
-            </small>
+
+            <button type="submit" class="submit-btn" id="uploadBtn">
+                <i class="fas fa-search me-2"></i>Analyse Cheating
+            </button>
+
+            <div class="progress-wrap" id="progressWrap">
+                <div class="progress">
+                    <div class="progress-bar" id="progressFill" style="width: 0%;"></div>
+                </div>
+                <small style="color: rgba(255,255,255,0.5);" class="mt-2 d-block">
+                    <i class="fas fa-spinner fa-spin me-1"></i>Processing with YOLOv8s...
+                </small>
+            </div>
+        </form>
+
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        </a>
+
+        <div class="feature-grid">
+            <div class="feature-item">
+                <i class="fas fa-video"></i> Video & image support
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-magic"></i> GradCAM XAI heatmap
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-bullseye"></i> 86.4% mAP@50
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-mobile-alt"></i> Mobile responsive
+            </div>
         </div>
-
-    </form>
-
-    <!-- Back -->
-    <a href="/" class="back-link">
-        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-    </a>
-
-    <!-- Features -->
-    <div class="feature-grid">
-        <div class="feature-item"><i class="fas fa-video"></i>Video & image</div>
-        <div class="feature-item"><i class="fas fa-magic"></i>GradCAM XAI</div>
-        <div class="feature-item"><i class="fas fa-bullseye"></i>86.4% mAP</div>
-        <div class="feature-item"><i class="fas fa-mobile-alt"></i>Responsive</div>
     </div>
 
-</div>
+    <script>
+        const uploadArea = document.getElementById("uploadArea");
+        const fileInput = document.getElementById("fileInput");
+        const fileInfo = document.getElementById("fileInfo");
+        const fileSelected = document.getElementById("fileSelectedName");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const progressWrap = document.getElementById("progressWrap");
+        const progressFill = document.getElementById("progressFill");
 
-<!-- ========================
-     JS
-======================== -->
-<script>
-const uploadArea   = document.getElementById('uploadArea');
-const fileInput    = document.getElementById('fileInput');
-const fileInfo     = document.getElementById('fileInfo');
-const fileSelected = document.getElementById('fileSelectedName');
-const uploadBtn    = document.getElementById('uploadBtn');
-const progressWrap = document.getElementById('progressWrap');
-const progressFill = document.getElementById('progressFill');
+        uploadArea.addEventListener("click", () => fileInput.click());
 
-/* ========================
-   FILE HANDLING
-======================== */
-uploadArea.onclick = () => fileInput.click();
+        ["dragenter", "dragover", "dragleave", "drop"].forEach((evt) => {
+            uploadArea.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
 
-fileInput.onchange = e => updateFileInfo(e.target.files[0]);
+        ["dragenter", "dragover"].forEach((evt) => {
+            uploadArea.addEventListener(evt, () => uploadArea.classList.add("dragover"));
+        });
 
-uploadArea.ondrop = e => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-        fileInput.files = e.dataTransfer.files;
-        updateFileInfo(file);
-    }
-};
+        ["dragleave", "drop"].forEach((evt) => {
+            uploadArea.addEventListener(evt, () => uploadArea.classList.remove("dragover"));
+        });
 
-['dragenter','dragover'].forEach(e =>
-    uploadArea.addEventListener(e, ev => {
-        ev.preventDefault();
-        uploadArea.classList.add('dragover');
-    })
-);
+        uploadArea.addEventListener("drop", (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateFileInfo(files[0]);
+            }
+        });
 
-['dragleave','drop'].forEach(e =>
-    uploadArea.addEventListener(e, () =>
-        uploadArea.classList.remove('dragover')
-    )
-);
+        fileInput.addEventListener("change", (e) => updateFileInfo(e.target.files[0]));
 
-function updateFileInfo(file) {
-    if (!file) return;
+        function updateFileInfo(file) {
+            if (file) {
+                const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+                fileInfo.textContent = "File selected:";
+                fileSelected.textContent = `📎 ${file.name} (${sizeMB} MB)`;
+                uploadBtn.innerHTML = '<i class="fas fa-search me-2"></i>Analyse Cheating';
+            }
+        }
 
-    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+        document.getElementById("uploadForm").addEventListener("submit", function () {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analysing...';
+            progressWrap.style.display = "block";
 
-    fileInfo.textContent = 'File selected:';
-    fileSelected.textContent = `📎 ${file.name} (${sizeMB} MB)`;
-}
+            let val = 0;
+            const interval = setInterval(() => {
+                val += Math.random() * 15;
+                if (val > 92) val = 92;
+                progressFill.style.width = val + "%";
+            }, 400);
 
-/* ========================
-   PROGRESS ANIMATION
-======================== */
-document.getElementById('uploadForm').onsubmit = () => {
-    uploadBtn.disabled = true;
-    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analysing...';
-
-    progressWrap.style.display = 'block';
-
-    let val = 0;
-    const interval = setInterval(() => {
-        val = Math.min(val + Math.random() * 15, 92);
-        progressFill.style.width = val + '%';
-    }, 400);
-
-    setTimeout(() => {
-        clearInterval(interval);
-        progressFill.style.width = '100%';
-    }, 5000);
-};
-</script>
-
+            setTimeout(() => {
+                clearInterval(interval);
+                progressFill.style.width = "100%";
+            }, 5000);
+        });
+    </script>
 </body>
 </html>

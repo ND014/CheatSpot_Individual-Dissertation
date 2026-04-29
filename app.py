@@ -1,290 +1,300 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
-import os, cv2, mimetypes, shutil, threading, base64
-import numpy as np
-from ultralytics import YOLO
+import base64
+import mimetypes
+import os
+import shutil
+import threading
 from datetime import datetime
+
+import cv2
+import numpy as np
+from flask import Flask, jsonify, redirect, render_template, request, send_file, url_for
+from ultralytics import YOLO
+
 from xai import generate_gradcam
 
-# ========================
-# CONFIG
-# ========================
+
 app = Flask(__name__)
 
-UPLOAD_FOLDER = 'uploads'
-OUTPUT_FOLDER = 'output'
+UPLOAD_FOLDER = "uploads"
+OUTPUT_FOLDER = "output"
+MODEL_PATH = "yolov8s/weights/best.pt"
+DASHBOARD_VIDEO_PATH = os.path.join("static", "cheatspot_result.mp4")
 
-app.config.update({
-    'UPLOAD_FOLDER': UPLOAD_FOLDER,
-    'OUTPUT_FOLDER': OUTPUT_FOLDER
-})
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["OUTPUT_FOLDER"] = OUTPUT_FOLDER
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-model = YOLO('yolov8s/weights/best.pt')
-model.names[0] = 'students_cheating'
+model = YOLO(MODEL_PATH)
+model.names[0] = "students_cheating"
 
-CONF_THRESHOLD = 0.60
 ALERTS = []
+CONF_THRESHOLD = 0.60
 
 
-# ========================
-# UTILITIES
-# ========================
 def is_video_file(filename):
     filetype, _ = mimetypes.guess_type(filename)
     return filetype and filetype.startswith("video")
 
 
-def encode_frame(frame):
-    _, buffer = cv2.imencode('.jpg', frame)
-    return base64.b64encode(buffer).decode('utf-8')
+def encode_frame_to_base64(frame):
+    _, buffer = cv2.imencode(".jpg", frame)
+    return base64.b64encode(buffer).decode("utf-8")
 
 
-def add_alert(frame, conf):
-    ALERTS.append({
-        'time': datetime.now().strftime("%H:%M:%S"),
-        'message': f"🚨 Cheating detected {conf:.1%}",
-        'conf': int(conf * 100),
-        'frame': encode_frame(frame)
-    })
+def append_alert(frame, conf):
+    ALERTS.append(
+        {
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "message": f"🚨 Cheating detected {conf:.1%}",
+            "conf": int(conf * 100),
+            "frame": encode_frame_to_base64(frame),
+        }
+    )
+
     if len(ALERTS) > 10:
         ALERTS.pop(0)
 
 
 def clear_output_folder():
-    if os.path.exists(OUTPUT_FOLDER):
-        shutil.rmtree(OUTPUT_FOLDER)
-    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    if os.path.exists(app.config["OUTPUT_FOLDER"]):
+        shutil.rmtree(app.config["OUTPUT_FOLDER"])
+    os.makedirs(app.config["OUTPUT_FOLDER"], exist_ok=True)
 
 
-# ========================
-# CORE LOGIC
-# ========================
-def draw_boxes(results, img):
-    annotated = img.copy()
-
-    for r in results:
-        if not r.boxes:
-            continue
-
-        for box in r.boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
-            conf = float(box.conf[0].cpu().numpy())
-
-            label = f"students_cheating {conf:.1%}"
-            color = (0, 0, 255) if conf >= CONF_THRESHOLD else (0, 140, 255)
-            thickness = max(3, int(conf * 6))
-
-            # Draw box
-            cv2.rectangle(annotated, (x1, y1), (x2, y2), color, thickness)
-
-            # Label background
-            (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
-            cv2.rectangle(annotated, (x1, y1 - h - 10), (x1 + w, y1), color, -1)
-
-            # Label text
-            cv2.putText(annotated, label, (x1, y1 - 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-
-            # Alert trigger
-            if conf >= CONF_THRESHOLD:
-                add_alert(annotated, conf)
-
-    return annotated
-
-
-def process_video(input_path, output_path):
-    cap = cv2.VideoCapture(input_path)
-
-    fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    out = cv2.VideoWriter(
-        output_path,
-        cv2.VideoWriter_fourcc(*'avc1'),
-        fps,
-        (width, height)
+def predict_frame(frame):
+    return model.predict(
+        frame,
+        conf=CONF_THRESHOLD,
+        classes=[0],
+        verbose=False,
     )
 
-    frame_count = 0
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+def draw_custom_boxes(results, img):
+    annotated_img = img.copy()
 
-        results = model.predict(frame, conf=CONF_THRESHOLD, classes=[0], verbose=False)
-        annotated = draw_boxes(results, frame)
+    for r in results:
+        boxes = r.boxes
+        if boxes is None:
+            continue
 
-        out.write(annotated)
+        for box in boxes:
+            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+            conf = float(box.conf[0].cpu().numpy())
+            label = f"students_cheating {conf:.1%}"
 
-        frame_count += 1
-        if frame_count % 30 == 0:
-            print(f"Processed {frame_count} frames...")
+            color = (0, 0, 255) if conf >= 0.60 else (0, 140, 255)
+            thickness = max(3, int(conf * 6))
 
-    cap.release()
-    out.release()
+            cv2.rectangle(
+                annotated_img,
+                (int(x1), int(y1)),
+                (int(x2), int(y2)),
+                color,
+                thickness,
+            )
+
+            label_size = cv2.getTextSize(
+                label,
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                2,
+            )[0]
+
+            cv2.rectangle(
+                annotated_img,
+                (int(x1), int(y1) - label_size[1] - 10),
+                (int(x1) + label_size[0], int(y1)),
+                color,
+                -1,
+            )
+
+            cv2.putText(
+                annotated_img,
+                label,
+                (int(x1), int(y1) - 5),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2,
+            )
+
+            if conf >= CONF_THRESHOLD:
+                append_alert(annotated_img, conf)
+
+    return annotated_img
 
 
-def process_image(input_path, output_path):
-    img = cv2.imread(input_path)
-    results = model.predict(img, conf=CONF_THRESHOLD, classes=[0], verbose=False)
-    annotated = draw_boxes(results, img)
-    cv2.imwrite(output_path, annotated)
-
-
-# ========================
-# DASHBOARD PREPROCESS
-# ========================
 def preprocess_dashboard_video():
-    video_path = os.path.join('static', 'cheatspot_result.mp4')
-
-    if not os.path.exists(video_path):
-        print("⚠️ Dashboard video not found")
+    if not os.path.exists(DASHBOARD_VIDEO_PATH):
+        print("⚠️ Dashboard video not found, skipping pre-processing")
         return
 
-    print("🎬 Preprocessing dashboard video...")
-    cap = cv2.VideoCapture(video_path)
-
+    print("🎬 Pre-processing dashboard video for alerts...")
+    cap = cv2.VideoCapture(DASHBOARD_VIDEO_PATH)
     frame_count = 0
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
 
         if frame_count % 15 == 0:
-            results = model.predict(frame, conf=CONF_THRESHOLD, classes=[0], verbose=False)
-            draw_boxes(results, frame)
+            results = predict_frame(frame)
+            draw_custom_boxes(results, frame)
 
         frame_count += 1
 
     cap.release()
-    print(f"✅ Done! {len(ALERTS)} alerts generated")
+    print(f"✅ Dashboard pre-processing done! {len(ALERTS)} alerts found.")
 
 
 threading.Thread(target=preprocess_dashboard_video, daemon=True).start()
 
 
-# ========================
-# ROUTES
-# ========================
-@app.route('/')
+@app.route("/")
 def dashboard():
-    return render_template('dashboard.html')
+    return render_template("dashboard.html")
 
 
-@app.route('/upload', methods=['GET'])
+@app.route("/api/alerts")
+def api_alerts():
+    return jsonify(ALERTS[-10:])
+
+
+@app.route("/api/set_conf", methods=["POST"])
+def set_conf():
+    global CONF_THRESHOLD
+
+    data = request.get_json()
+    val = float(data.get("conf", 0.60))
+    CONF_THRESHOLD = max(0.25, min(0.75, val))
+
+    print(f"🎚️ Threshold updated → {CONF_THRESHOLD:.0%}")
+    return jsonify({"conf": CONF_THRESHOLD})
+
+
+@app.route("/api/get_conf")
+def get_conf():
+    return jsonify({"conf": CONF_THRESHOLD})
+
+
+@app.route("/upload", methods=["GET"])
 def upload_form():
-    return render_template('upload.html')
+    return render_template("upload.html")
 
 
-@app.route('/upload', methods=['POST'])
+@app.route("/upload", methods=["POST"])
 def upload_file():
-    file = request.files.get('file')
+    file = request.files.get("file")
+    if not file or file.filename == "":
+        return "No file uploaded", 400
 
-    if not file or file.filename == '':
-        return 'No file uploaded', 400
-
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+    filename = file.filename
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
 
     clear_output_folder()
 
     if is_video_file(filepath):
-        output_name = 'cheatspot_result.mp4'
-        process_video(filepath, os.path.join(OUTPUT_FOLDER, output_name))
+        cap = cv2.VideoCapture(filepath)
+        fps = int(cap.get(cv2.CAP_PROP_FPS)) or 30
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        fourcc = cv2.VideoWriter_fourcc(*"avc1")
+        output_path = os.path.join(app.config["OUTPUT_FOLDER"], "cheatspot_result.mp4")
+        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+        frame_count = 0
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            results = predict_frame(frame)
+            annotated = draw_custom_boxes(results, frame)
+            out.write(annotated)
+
+            frame_count += 1
+            if frame_count % 30 == 0:
+                print(f"Processed {frame_count} frames...")
+
+        cap.release()
+        out.release()
+        display_filename = "cheatspot_result.mp4"
+
     else:
-        output_name = file.filename
-        process_image(filepath, os.path.join(OUTPUT_FOLDER, output_name))
+        img = cv2.imread(filepath)
+        results = predict_frame(img)
+        annotated_img = draw_custom_boxes(results, img)
+        display_filename = filename
+        output_path = os.path.join(app.config["OUTPUT_FOLDER"], display_filename)
+        cv2.imwrite(output_path, annotated_img)
 
-    return redirect(url_for('show_result', filename=output_name))
+    return redirect(url_for("show_result", filename=display_filename))
 
 
-@app.route('/result/<filename>')
+@app.route("/result/<filename>")
 def show_result(filename):
-    filetype = 'video' if filename.endswith('.mp4') else 'image'
-    return render_template('result.html', filename=filename, filetype=filetype)
+    filetype = "video" if filename.endswith(".mp4") else "image"
+    return render_template("result.html", filename=filename, filetype=filetype)
 
 
-@app.route('/output/<filename>')
+@app.route("/output/<filename>")
 def output_file(filename):
-    return send_file(os.path.join(OUTPUT_FOLDER, filename))
+    output_path = os.path.join(app.config["OUTPUT_FOLDER"], filename)
+    return send_file(output_path)
 
 
-# ========================
-# API
-# ========================
-@app.route('/api/alerts')
-def api_alerts():
-    return jsonify(ALERTS[-10:])
+@app.route("/analytics")
+def analytics():
+    return render_template("analytics.html")
 
 
-@app.route('/api/set_conf', methods=['POST'])
-def set_conf():
-    global CONF_THRESHOLD
-
-    val = float(request.json.get('conf', 0.60))
-    CONF_THRESHOLD = max(0.25, min(0.75, val))
-
-    print(f"🎚️ Threshold → {CONF_THRESHOLD:.0%}")
-    return jsonify({'conf': CONF_THRESHOLD})
-
-
-@app.route('/api/get_conf')
-def get_conf():
-    return jsonify({'conf': CONF_THRESHOLD})
-
-
-# ========================
-# XAI / GRADCAM
-# ========================
-@app.route('/explain/<filename>')
+@app.route("/explain/<filename>")
 def explain(filename):
     try:
-        input_path = os.path.join(UPLOAD_FOLDER, filename)
-        output_name = f'gradcam_{filename}'
-        output_path = os.path.join(OUTPUT_FOLDER, output_name)
+        input_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        output_filename = f"gradcam_{filename}"
+        output_path = os.path.join(app.config["OUTPUT_FOLDER"], output_filename)
 
         generate_gradcam(input_path, output_path)
-        return jsonify({'gradcam_url': f'/output/{output_name}'})
+        return jsonify({"gradcam_url": f"/output/{output_filename}"})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ GradCAM error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/explain_dashboard')
+@app.route("/explain_dashboard")
 def explain_dashboard():
     try:
-        video_path = os.path.join('static', 'cheatspot_result.mp4')
-        cap = cv2.VideoCapture(video_path)
-
-        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        cap.set(cv2.CAP_PROP_POS_FRAMES, total // 2)
+        cap = cv2.VideoCapture(DASHBOARD_VIDEO_PATH)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.set(cv2.CAP_PROP_POS_FRAMES, total_frames // 2)
 
         ret, frame = cap.read()
         cap.release()
 
         if not ret:
-            return jsonify({'error': 'Frame read failed'}), 500
+            return jsonify({"error": "Could not read video frame"}), 500
 
-        frame_path = os.path.join(UPLOAD_FOLDER, 'dashboard_frame.jpg')
+        frame_path = os.path.join(app.config["UPLOAD_FOLDER"], "dashboard_frame.jpg")
         cv2.imwrite(frame_path, frame)
 
-        output_name = 'gradcam_dashboard.jpg'
-        output_path = os.path.join(OUTPUT_FOLDER, output_name)
-
+        output_filename = "gradcam_dashboard.jpg"
+        output_path = os.path.join(app.config["OUTPUT_FOLDER"], output_filename)
         generate_gradcam(frame_path, output_path)
 
-        return jsonify({'gradcam_url': f'/output/{output_name}'})
+        return jsonify({"gradcam_url": f"/output/{output_filename}"})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ Dashboard GradCAM error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
-# ========================
-# RUN
-# ========================
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True, port=5001)
