@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CheatSpot - Dashboard</title>
+
+<!-- Libraries -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ========================
+   ROOT & GLOBAL
+======================== */
+:root {
+    --dark-card: rgba(20, 25, 40, 0.95);
+    --glass: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: white;
+}
+
+/* ========================
+   CARDS
+======================== */
+.glass-card {
+    background: var(--dark-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 35px 70px rgba(0,0,0,0.4);
+}
+
+/* ========================
+   BUTTONS
+======================== */
+.gradient-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 16px;
+    padding: 12px 28px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.gradient-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(102,126,234,0.4);
+}
+
+/* ========================
+   STATUS
+======================== */
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ========================
+   LIVE FEED
+======================== */
+.live-feed {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.feed-overlay {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+    background: rgba(0,0,0,0.7);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+}
+
+/* ========================
+   METRICS
+======================== */
+.metric-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+.metric-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.metric-label {
+    color: rgba(255,255,255,0.75);
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+/* ========================
+   ALERTS
+======================== */
+.alert-item {
+    background: linear-gradient(90deg, rgba(255,107,107,0.2), rgba(238,90,82,0.2));
+    border-left: 4px solid #ff6b6b;
+    border-radius: 12px;
+    animation: slideIn 0.5s ease;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.alert-item:hover {
+    background: linear-gradient(90deg, rgba(255,107,107,0.35), rgba(238,90,82,0.35));
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ========================
+   SCANLINE
+======================== */
+.scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00ff88, transparent);
+    animation: scan 3s linear infinite;
+    z-index: 5;
+    pointer-events: none;
+}
+
+@keyframes scan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* ========================
+   CONF SLIDER
+======================== */
+.conf-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+}
+
+.conf-slider-wrap label {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+}
+
+#confSlider {
+    width: 130px;
+    accent-color: #4f98a3;
+    cursor: pointer;
+}
+
+#confValue {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #4f98a3;
+    min-width: 38px;
+}
+
+#confSaved {
+    font-size: 0.72rem;
+    color: #51cf66;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+#confSaved.show {
+    opacity: 1;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ========================
+     HEADER
+======================== -->
+<div class="bg-dark border-bottom">
+    <div class="container-fluid py-3 px-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <h1 class="h3 mb-0 fw-bold text-white">
+                <i class="fas fa-eye-slash text-danger me-2"></i>CheatSpot Dashboard
+            </h1>
+
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+
+                <div class="conf-slider-wrap">
+                    <i class="fas fa-sliders-h" style="color:#4f98a3"></i>
+                    <label for="confSlider">Conf Threshold</label>
+                    <input type="range" id="confSlider" min="25" max="75" value="60" step="5">
+                    <span id="confValue">60%</span>
+                    <span id="confSaved"><i class="fas fa-check"></i> Saved</span>
+                </div>
+
+                <div id="statusIndicator" class="status-indicator bg-success"></div>
+                <span id="statusText" class="badge bg-success">🟢 Secure</span>
+                <span class="text-white-50 small">YOLOv8s | mAP@50: 86.4%</span>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================
+     CONTENT
+======================== -->
+<div class="container-fluid py-4">
+<div class="row g-4">
+
+<!-- Live Feed -->
+<div class="col-lg-8">
+<div class="glass-card p-4">
+
+<h5 class="mb-4 text-white">
+<i class="fas fa-video text-primary me-2"></i>Live CCTV Feed
+</h5>
+
+<div class="live-feed position-relative" style="height:500px; background:#000;">
+
+<div class="scanline"></div>
+
+<video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+<source src="{{ url_for('static', filename='cheatspot_result.mp4') }}" type="video/mp4">
+</video>
+
+<div class="feed-overlay">
+<div><i class="fas fa-microchip me-1 text-success"></i>Model: YOLOv8s</div>
+<div><i class="fas fa-sliders-h me-1 text-warning"></i>Conf: <span id="feedConfDisplay">0.60</span></div>
+<div><i class="fas fa-tag me-1 text-info"></i>Class: students_cheating</div>
+</div>
+
+<div class="position-absolute bottom-0 start-0 p-3">
+<span class="badge bg-danger">🔴 LIVE</span>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- Metrics + Controls -->
+<div class="col-lg-4">
+<div class="row g-3 mb-4">
+
+<div class="col-6">
+<div class="metric-card h-100">
+<i class="fas fa-shield-alt fa-2x text-danger mb-2"></i>
+<div id="activeThreats" class="metric-number">0</div>
+<div class="metric-label">Active Threats</div>
+</div>
+</div>
+
+<div class="col-6">
+<div class="metric-card h-100">
+<i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+<div id="totalAlerts" class="metric-number">0</div>
+<div class="metric-label">Session Alerts</div>
+</div>
+</div>
+
+<div class="col-6">
+<div class="metric-card h-100">
+<i class="fas fa-tag fa-2x text-info mb-2"></i>
+<div class="metric-number" style="font-size:1.1rem; padding-top:10px;">1 Class</div>
+<div class="metric-label">Students Cheating</div>
+</div>
+</div>
+
+<div class="col-6">
+<div class="metric-card h-100">
+<i class="fas fa-brain fa-2x text-primary mb-2"></i>
+<div class="metric-number">86.4%</div>
+<div class="metric-label">mAP@50</div>
+</div>
+</div>
+
+</div>
+
+<div class="glass-card p-4">
+<h6 class="mb-3"><i class="fas fa-cogs me-2"></i>Quick Actions</h6>
+
+<div class="d-grid gap-2">
+<a href="/upload" class="gradient-btn text-white text-decoration-none">
+<i class="fas fa-upload me-2"></i>Upload Media
+</a>
+
+<a href="/analytics" class="btn btn-outline-info">
+<i class="fas fa-chart-line me-2"></i>View Analytics
+</a>
+
+<button class="btn btn-outline-warning" onclick="runDashboardXAI()">
+<i class="fas fa-magic me-2"></i>XAI Explainer
+</button>
+</div>
+
+</div>
+</div>
+
+<!-- Alerts -->
+<div class="col-12">
+<div class="glass-card p-4">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h5 class="mb-0 text-white">
+<i class="fas fa-bell text-warning me-2"></i>Recent Alerts
+<span class="alerts-hint ms-2">— click any alert to view frame</span>
+</h5>
+
+<button class="btn btn-sm btn-outline-light" onclick="fetchAlerts()">
+<i class="fas fa-sync-alt"></i>
+</button>
+</div>
+
+<div id="alerts-list" class="overflow-auto" style="max-height:400px;">
+<div class="text-center py-5" style="color:rgba(255,255,255,0.5);">
+<i class="fas fa-check-circle fa-3x mb-3 opacity-50"></i>
+<p>No cheating detected<br><small>System monitoring securely...</small></p>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- ========================
+     JS
+======================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const slider = document.getElementById('confSlider');
+const confVal = document.getElementById('confValue');
+const confSaved = document.getElementById('confSaved');
+const feedDisp = document.getElementById('feedConfDisplay');
+
+/* LOAD CONF */
+fetch('/api/get_conf')
+.then(r => r.json())
+.then(d => {
+    const pct = Math.round(d.conf * 100);
+    slider.value = pct;
+    confVal.textContent = pct + '%';
+    feedDisp.textContent = (pct / 100).toFixed(2);
+});
+
+/* SLIDER */
+slider.addEventListener('input', () => {
+    confVal.textContent = slider.value + '%';
+    feedDisp.textContent = (slider.value / 100).toFixed(2);
+});
+
+slider.addEventListener('change', () => {
+    fetch('/api/set_conf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conf: slider.value / 100 })
+    })
+    .then(() => {
+        confSaved.classList.add('show');
+        setTimeout(() => confSaved.classList.remove('show'), 2000);
+    });
+});
+
+/* ALERTS */
+function fetchAlerts() {
+    fetch('/api/alerts')
+    .then(r => r.json())
+    .then(alerts => {
+        const list = document.getElementById('alerts-list');
+
+        document.getElementById('totalAlerts').textContent = alerts.length;
+
+        const high = alerts.filter(a => a.conf >= 70).length;
+        document.getElementById('activeThreats').textContent = high;
+
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = document.getElementById('statusIndicator');
+
+        if (high > 0) {
+            statusText.textContent = '🔴 Alert!';
+            statusText.className = 'badge bg-danger';
+            statusIndicator.className = 'status-indicator bg-danger';
+        } else {
+            statusText.textContent = '🟢 Secure';
+            statusText.className = 'badge bg-success';
+            statusIndicator.className = 'status-indicator bg-success';
+        }
+
+        if (!alerts.length) {
+            list.innerHTML = `
+            <div class="text-center py-5" style="color:rgba(255,255,255,0.5);">
+                <i class="fas fa-check-circle fa-3x mb-3 opacity-50"></i>
+                <p>No cheating detected<br><small>System monitoring securely...</small></p>
+            </div>`;
+            return;
+        }
+
+        list.innerHTML = [...alerts].reverse().map(a => `
+            <div class="alert-item p-3 mb-3"
+                onclick="showFrame('${a.frame}', '${a.time}', ${a.conf})">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${a.time}</strong><br>
+                        <small>${a.message}</small>
+                    </div>
+                    <div class="badge bg-danger">${a.conf}%</div>
+                </div>
+            </div>
+        `).join('');
+    });
+}
+
+function showFrame(frame, time, conf) {
+    document.getElementById('frame-img').src = 'data:image/jpeg;base64,' + frame;
+    document.getElementById('frame-time').textContent = time;
+    document.getElementById('frame-conf').textContent = conf + '%';
+    new bootstrap.Modal(document.getElementById('frameModal')).show();
+}
+
+fetchAlerts();
+setInterval(fetchAlerts, 3000);
+</script>
+
+</body>
+</html>

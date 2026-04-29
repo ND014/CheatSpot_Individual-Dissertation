@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheatSpot - Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --font-body: 'Satoshi', 'Inter', sans-serif;
+            --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
+            --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
+            --text-base: clamp(1rem,     0.95rem + 0.25vw, 1.125rem);
+            --text-lg:   clamp(1.125rem, 1rem    + 0.75vw, 1.5rem);
+            --text-xl:   clamp(1.5rem,   1.2rem  + 1.25vw, 2.25rem);
+            --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+            --space-6: 1.5rem; --space-8: 2rem;    --space-10: 2.5rem;
+            --radius-md: 0.5rem; --radius-lg: 0.75rem; --radius-xl: 1rem;
+            --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        [data-theme="dark"] {
+            --color-bg:             #0f1117;
+            --color-surface:        #161820;
+            --color-surface-2:      #1c1f2a;
+            --color-surface-offset: #232633;
+            --color-border:         rgba(255,255,255,0.08);
+            --color-text:           #e8e9f0;
+            --color-text-muted:     rgba(232,233,240,0.65);
+            --color-text-faint:     rgba(232,233,240,0.35);
+            --color-primary:        #4f98a3;
+            --color-success:        #6daa45;
+            --color-warning:        #e8af34;
+            --color-error:          #dd6974;
+            --color-info:           #5591c7;
+            --color-purple:         #a86fdf;
+            --shadow-md: 0 4px 24px rgba(0,0,0,0.4);
+            --shadow-lg: 0 12px 48px rgba(0,0,0,0.5);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-body); font-size: var(--text-base); background: var(--color-bg); color: var(--color-text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+        .app-header { background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: var(--space-4) var(--space-8); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .app-header h1 { font-size: var(--text-lg); font-weight: 700; color: var(--color-text); display: flex; align-items: center; gap: var(--space-2); }
+        .back-btn { background: var(--color-surface-offset); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 0.5rem 1.25rem; font-size: var(--text-sm); font-weight: 600; color: var(--color-text); text-decoration: none; transition: background var(--transition), border-color var(--transition); }
+        .back-btn:hover { background: var(--color-surface-2); color: var(--color-text); border-color: rgba(255,255,255,0.18); }
+        .page-content { max-width: 1280px; margin: 0 auto; padding: var(--space-8); }
+        .section-label { font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-faint); margin-bottom: var(--space-4); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); }
+        .kpi-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2); }
+        .kpi-icon { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-bottom: var(--space-2); }
+        .kpi-icon.green  { background: rgba(109,170,69,0.15);  color: var(--color-success); }
+        .kpi-icon.blue   { background: rgba(85,145,199,0.15);  color: var(--color-info); }
+        .kpi-icon.yellow { background: rgba(232,175,52,0.15);  color: var(--color-warning); }
+        .kpi-icon.purple { background: rgba(168,111,223,0.15); color: var(--color-purple); }
+        .kpi-icon.teal   { background: rgba(79,152,163,0.15);  color: var(--color-primary); }
+        .kpi-value { font-size: var(--text-xl); font-weight: 700; color: var(--color-text); line-height: 1; font-variant-numeric: tabular-nums; }
+        .kpi-label { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 500; }
+        .card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: var(--space-6); box-shadow: var(--shadow-md); }
+        .card-title { font-size: var(--text-base); font-weight: 700; color: var(--color-text); display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-6); }
+        .card-title i { opacity: 0.75; }
+        .chart-container { position: relative; height: 300px; }
+        .chart-note { font-size: var(--text-xs); color: var(--color-text-faint); text-align: center; margin-top: var(--space-3); }
+        .baseline-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-4); margin-bottom: var(--space-4); }
+        .baseline-metric { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); text-align: center; }
+        .baseline-metric .val { font-size: var(--text-lg); font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; }
+        .baseline-metric .lbl { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+        .baseline-note { background: rgba(85,145,199,0.08); border: 1px solid rgba(85,145,199,0.2); border-radius: var(--radius-lg); padding: var(--space-4); font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.6; }
+        .baseline-note i { color: var(--color-info); margin-right: 0.4em; }
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
+        .charts-grid-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-4); margin-bottom: var(--space-8); }
+        .badge-custom { font-size: var(--text-xs); font-weight: 600; padding: 0.2em 0.7em; border-radius: var(--radius-md); display: inline-flex; align-items: center; gap: 0.3em; }
+        .badge-custom-red { background: rgba(221,105,116,0.15); color: var(--color-error); border: 1px solid rgba(221,105,116,0.25); }
+        .badge-teal { background: rgba(79,152,163,0.15); color: var(--color-primary); border: 1px solid rgba(79,152,163,0.25); }
+        .badge-winner { background: rgba(232,175,52,0.15); color: var(--color-warning); border: 1px solid rgba(232,175,52,0.25); }
+        .badge-purple { background: rgba(168,111,223,0.15); color: var(--color-purple); border: 1px solid rgba(168,111,223,0.25); }
+        .h2h-table { width: 100%; border-collapse: collapse; }
+        .h2h-table th { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 1px solid var(--color-border); }
+        .h2h-table th.center { text-align: center; }
+        .h2h-table td { padding: var(--space-3) var(--space-4); font-size: var(--text-sm); border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .h2h-table td.center { text-align: center; }
+        .h2h-table tr:last-child td { border-bottom: none; }
+        .h2h-table tr.winner-row { background: rgba(79,152,163,0.06); }
+        .metric-win { color: var(--color-primary); font-weight: 700; }
+        .metric-lose { color: var(--color-text-muted); font-weight: 400; }
+        .metric-val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-text); }
+        .kpi-card.teal-highlight { border-color: rgba(79,152,163,0.3); background: linear-gradient(135deg, rgba(79,152,163,0.08), var(--color-surface)); }
+        .hybrid-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
+        .hybrid-tile { background: rgba(79,152,163,0.07); border: 1px solid rgba(79,152,163,0.2); border-radius: var(--radius-lg); padding: var(--space-4); text-align: center; }
+        .hybrid-tile .val { font-size: var(--text-lg); font-weight: 700; color: var(--color-primary); font-variant-numeric: tabular-nums; }
+        .hybrid-tile .lbl { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+        .vit-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-4); margin-bottom: var(--space-6); }
+        .vit-tile { background: rgba(168,111,223,0.07); border: 1px solid rgba(168,111,223,0.2); border-radius: var(--radius-lg); padding: var(--space-4); text-align: center; }
+        .vit-tile .val { font-size: var(--text-lg); font-weight: 700; color: var(--color-purple); font-variant-numeric: tabular-nums; }
+        .vit-tile .lbl { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+        .class-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
+        .class-card { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); }
+        .class-card .class-title { font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: var(--space-3); }
+        .class-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--space-2); }
+        .class-metric { text-align: center; }
+        .class-metric .cv { font-size: var(--text-base); font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; }
+        .class-metric .cl { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+        .loss-tab { font-size: var(--text-xs); font-weight: 600; padding: 0.35rem 0.9rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: transparent; color: var(--color-text-muted); cursor: pointer; transition: all var(--transition); }
+        .loss-tab:hover { background: var(--color-surface-2); color: var(--color-text); }
+        .loss-tab.active { background: var(--color-surface-offset); color: var(--color-text); border-color: rgba(255,255,255,0.18); }
+        .stat-pill { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); text-align:center; }
+        .stat-pill .sp-val { font-size: var(--text-base); font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; }
+        .stat-pill .sp-lbl { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+        .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); font-size: var(--text-xs); }
+        .config-row .lbl { color: var(--color-text-muted); }
+        .config-row .val { color: var(--color-text); font-weight: 600; }
+        @media (max-width: 900px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid, .charts-grid-bottom { grid-template-columns: 1fr; }
+            .baseline-grid, .hybrid-metrics, .vit-metrics { grid-template-columns: repeat(2, 1fr); }
+            .page-content { padding: var(--space-4); }
+            .app-header { padding: var(--space-4); }
+            .class-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <h1>
+        <i class="fas fa-chart-line" style="color:var(--color-primary)"></i>
+        CheatSpot Analytics
+    </h1>
+    <a href="/" class="back-btn">
+        <i class="fas fa-arrow-left me-2"></i>Dashboard
+    </a>
+</header>
+
+<div class="page-content">
+
+    <!-- KPIs: Best Detector -->
+    <p class="section-label">Best Detector — YOLOv8s</p>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="fas fa-bullseye"></i></div>
+            <div class="kpi-value">86.4%</div>
+            <div class="kpi-label">mAP@50</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon blue"><i class="fas fa-crosshairs"></i></div>
+            <div class="kpi-value">81.9%</div>
+            <div class="kpi-label">Precision</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon yellow"><i class="fas fa-redo"></i></div>
+            <div class="kpi-value">82.8%</div>
+            <div class="kpi-label">Recall</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon purple"><i class="fas fa-star"></i></div>
+            <div class="kpi-value">82.4%</div>
+            <div class="kpi-label">F1 Score</div>
+        </div>
+    </div>
+
+    <!-- KPIs: Best Custom Model -->
+    <p class="section-label">Best Custom Model — CNN+ViT Hybrid Detector</p>
+    <div class="kpi-grid" style="margin-bottom:var(--space-8)">
+        <div class="kpi-card teal-highlight">
+            <div class="kpi-icon teal"><i class="fas fa-bullseye"></i></div>
+            <div class="kpi-value" style="color:var(--color-primary)">24.07%</div>
+            <div class="kpi-label">mAP@50</div>
+        </div>
+        <div class="kpi-card teal-highlight">
+            <div class="kpi-icon teal"><i class="fas fa-crosshairs"></i></div>
+            <div class="kpi-value" style="color:var(--color-primary)">98%</div>
+            <div class="kpi-label">Cls Precision</div>
+        </div>
+        <div class="kpi-card teal-highlight">
+            <div class="kpi-icon teal"><i class="fas fa-redo"></i></div>
+            <div class="kpi-value" style="color:var(--color-primary)">98%</div>
+            <div class="kpi-label">Cls Recall</div>
+        </div>
+        <div class="kpi-card teal-highlight">
+            <div class="kpi-icon teal"><i class="fas fa-check-circle"></i></div>
+            <div class="kpi-value" style="color:var(--color-primary)">98%</div>
+            <div class="kpi-label">Cls Accuracy</div>
+        </div>
+    </div>
+
+    <!-- Benchmark + mAP Gauge -->
+    <div class="charts-grid" style="margin-bottom:var(--space-4)">
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-trophy" style="color:var(--color-warning)"></i>
+                Model Benchmark Comparison
+            </div>
+            <div class="chart-container">
+                <canvas id="benchmarkChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-tachometer-alt" style="color:var(--color-success)"></i>
+                mAP@50 Score
+            </div>
+            <div class="chart-container">
+                <canvas id="mapGauge"></canvas>
+            </div>
+            <div class="chart-note">YOLOv8s — Best Detector</div>
+        </div>
+    </div>
+
+    <!-- Session Alerts + Confidence Pie -->
+    <div class="charts-grid-bottom">
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-clock" style="color:var(--color-error)"></i>
+                Session Alerts Timeline
+            </div>
+            <div class="chart-container">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-chart-pie" style="color:var(--color-info)"></i>
+                Confidence Levels
+            </div>
+            <div class="chart-container">
+                <canvas id="confPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Radar -->
+    <p class="section-label">All Models — Multi-Metric Overview</p>
+    <div class="card" style="margin-bottom:var(--space-8)">
+        <div class="card-title">
+            <i class="fas fa-spider" style="color:var(--color-primary)"></i>
+            Model Performance Radar
+            <span style="font-size:var(--text-xs);font-weight:400;color:var(--color-text-muted);margin-left:auto">mAP@50 · Precision · Recall · F1</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);align-items:center">
+            <div style="position:relative;height:380px">
+                <canvas id="radarChart"></canvas>
+            </div>
+            <div id="modelLegend" style="display:flex;flex-direction:column;gap:var(--space-3)"></div>
+        </div>
+    </div>
+
+    <!-- mAP Ranking -->
+    <p class="section-label">mAP@50 Ranking — All Models</p>
+    <div class="card" style="margin-bottom:var(--space-8)">
+        <div class="card-title">
+            <i class="fas fa-sort-amount-down" style="color:var(--color-warning)"></i>
+            mAP@50 Ranking — All Models
+        </div>
+        <div style="position:relative;height:340px">
+            <canvas id="rankChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Head-to-Head -->
+    <p class="section-label">Head-to-Head — YOLO vs Custom Models</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-8)">
+
+        <!-- LEFT: Comparison Table -->
+        <div class="card">
+            <div class="card-title" style="justify-content:space-between">
+                <span>
+                    <i class="fas fa-balance-scale" style="color:var(--color-warning)"></i>
+                    Frame-Level Comparison
+                </span>
+                <span class="badge-custom badge-winner">
+                    <i class="fas fa-trophy"></i> 145 Test Frames
+                </span>
+            </div>
+            <table class="h2h-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th class="center">YOLOv8s</th>
+                        <th class="center">CNN+ViT</th>
+                        <th class="center">ViT Standalone</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="winner-row">
+                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">mAP@0.5</td>
+                        <td class="center metric-win">86.44%</td>
+                        <td class="center metric-val">24.07%</td>
+                        <td class="center metric-lose">0.76%</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Cls Precision</td>
+                        <td class="center metric-lose">81.9%</td>
+                        <td class="center metric-win">98%</td>
+                        <td class="center metric-val">—</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Cls Recall</td>
+                        <td class="center metric-lose">82.8%</td>
+                        <td class="center metric-win">98%</td>
+                        <td class="center metric-val">94.4%</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Val Accuracy</td>
+                        <td class="center metric-lose">—</td>
+                        <td class="center metric-win">98%</td>
+                        <td class="center metric-val">94.4%</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Localisation</td>
+                        <td class="center metric-win">✅ Yes</td>
+                        <td class="center metric-val">✅ Yes</td>
+                        <td class="center metric-lose">⚠️ Weak</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Architecture</td>
+                        <td class="center" style="font-size:var(--text-xs);color:var(--color-text-muted)">Pretrained</td>
+                        <td class="center" style="font-size:var(--text-xs);color:var(--color-primary)">From-Scratch</td>
+                        <td class="center" style="font-size:var(--text-xs);color:var(--color-purple)">From-Scratch</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--color-text-muted);font-size:var(--text-xs)">Real-time Speed</td>
+                        <td class="center metric-win">✅ Fast</td>
+                        <td class="center metric-lose">⚡ Slower</td>
+                        <td class="center metric-lose">⚡ Slower</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="margin-top:var(--space-4);padding:var(--space-3) var(--space-4);background:rgba(79,152,163,0.07);border:1px solid rgba(79,152,163,0.2);border-radius:var(--radius-lg);font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.6">
+                <i class="fas fa-info-circle" style="color:var(--color-primary);margin-right:0.4em"></i>
+                YOLOv8s evaluated with mAP@0.5 on bounding box predictions. Custom models evaluated as detectors trained from scratch without pretrained weights.
+            </div>
+        </div>
+
+        <!-- RIGHT: Training Config -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-sliders-h" style="color:var(--color-primary)"></i>
+                Training Configuration
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+
+                <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)">
+                    <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-success);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
+                        <i class="fas fa-bolt me-1"></i>YOLO Models (×6)
+                    </div>
+                    <div class="config-row">
+                        <span class="lbl">Epochs</span><span class="val">100</span>
+                        <span class="lbl">Image Size</span><span class="val">640×640</span>
+                        <span class="lbl">Batch Size</span><span class="val">16</span>
+                        <span class="lbl">Optimizer</span><span class="val">SGD</span>
+                        <span class="lbl">Pretrained</span><span class="val" style="color:var(--color-success)">✅ Yes</span>
+                        <span class="lbl">Dataset</span><span class="val">~2.2K images</span>
+                    </div>
+                </div>
+
+                <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)">
+                    <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-primary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
+                        <i class="fas fa-brain me-1"></i>CNN+ViT Hybrid
+                    </div>
+                    <div class="config-row">
+                        <span class="lbl">Epochs</span><span class="val">20</span>
+                        <span class="lbl">Image Size</span><span class="val">224×224</span>
+                        <span class="lbl">Batch Size</span><span class="val">32</span>
+                        <span class="lbl">Optimizer</span><span class="val">Adam</span>
+                        <span class="lbl">Pretrained</span><span class="val" style="color:var(--color-error)">❌ No</span>
+                        <span class="lbl">Backbone</span><span class="val">ResNet-50</span>
+                    </div>
+                </div>
+
+                <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)">
+                    <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-purple);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
+                        <i class="fas fa-atom me-1"></i>ViT Standalone
+                    </div>
+                    <div class="config-row">
+                        <span class="lbl">Epochs</span><span class="val">50</span>
+                        <span class="lbl">Image Size</span><span class="val">224×224</span>
+                        <span class="lbl">Patch Size</span><span class="val">16×16</span>
+                        <span class="lbl">Optimizer</span><span class="val">Adam</span>
+                        <span class="lbl">Pretrained</span><span class="val" style="color:var(--color-error)">❌ No</span>
+                        <span class="lbl">Parameters</span><span class="val">5.05M</span>
+                    </div>
+                </div>
+
+                <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4)">
+                    <div style="font-size:var(--text-xs);font-weight:700;color:var(--color-error);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-3)">
+                        <i class="fas fa-microchip me-1"></i>Custom Grid Detector
+                    </div>
+                    <div class="config-row">
+                        <span class="lbl">Epochs</span><span class="val">18 (early stop)</span>
+                        <span class="lbl">Grid</span><span class="val">13×13</span>
+                        <span class="lbl">Anchor Boxes</span><span class="val" style="color:var(--color-error)">❌ None</span>
+                        <span class="lbl">Pretrained</span><span class="val" style="color:var(--color-error)">❌ No</span>
+                        <span class="lbl">Stopped by</span><span class="val" style="color:var(--color-warning)">Overfitting</span>
+                        <span class="lbl">Role</span><span class="val">Baseline only</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- CNN+ViT Hybrid Detail -->
+    <p class="section-label">CNN+ViT Hybrid Detector — Training Detail</p>
+    <div class="card" style="margin-bottom:var(--space-8)">
+        <div class="card-title" style="justify-content:space-between">
+            <span>
+                <i class="fas fa-brain" style="color:var(--color-primary)"></i>
+                CNN+ViT Hybrid Detector
+            </span>
+            <span class="badge-custom badge-teal">
+                <i class="fas fa-trophy"></i> Best Custom Model
+            </span>
+        </div>
+        <div class="hybrid-metrics">
+            <div class="hybrid-tile"><div class="val">24.07%</div><div class="lbl">mAP@50</div></div>
+            <div class="hybrid-tile"><div class="val">98%</div><div class="lbl">Cls Precision</div></div>
+            <div class="hybrid-tile"><div class="val">98%</div><div class="lbl">Cls Recall</div></div>
+            <div class="hybrid-tile"><div class="val">97.92%</div><div class="lbl">Weighted F1</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);align-items:start">
+            <div>
+                <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-3);font-weight:600">
+                    <i class="fas fa-wave-square me-1"></i> Train vs Val Accuracy (20 Epochs)
+                </div>
+                <div style="position:relative;height:200px">
+                    <canvas id="hybridAccChart"></canvas>
+                </div>
+            </div>
+            <div>
+                <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-3);font-weight:600">Per-Class Breakdown</div>
+                <div class="class-grid">
+                    <div class="class-card">
+                        <div class="class-title" style="color:var(--color-success)"><i class="fas fa-user-check me-1"></i>Not Cheating</div>
+                        <div class="class-metrics">
+                            <div class="class-metric"><div class="cv">97%</div><div class="cl">Precision</div></div>
+                            <div class="class-metric"><div class="cv">94%</div><div class="cl">Recall</div></div>
+                            <div class="class-metric"><div class="cv">95%</div><div class="cl">F1</div></div>
+                        </div>
+                    </div>
+                    <div class="class-card">
+                        <div class="class-title" style="color:var(--color-error)"><i class="fas fa-user-secret me-1"></i>Cheating</div>
+                        <div class="class-metrics">
+                            <div class="class-metric"><div class="cv">98%</div><div class="cl">Precision</div></div>
+                            <div class="class-metric"><div class="cv">99%</div><div class="cl">Recall</div></div>
+                            <div class="class-metric"><div class="cv">99%</div><div class="cl">F1</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding:var(--space-3) var(--space-4);background:rgba(79,152,163,0.06);border:1px solid rgba(79,152,163,0.15);border-radius:var(--radius-lg);font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.6;margin-top:var(--space-3)">
+                    <i class="fas fa-microchip" style="color:var(--color-primary);margin-right:0.4em"></i>
+                    ResNet-50 CNN backbone (spatial features) + Transformer encoder (global context) + detection head. Trained from scratch — no pretrained weights.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ViT Standalone Detail -->
+    <p class="section-label">Standalone ViT Detector — Training Detail</p>
+    <div class="card" style="margin-bottom:var(--space-8)">
+        <div class="card-title" style="justify-content:space-between">
+            <span>
+                <i class="fas fa-atom" style="color:var(--color-purple)"></i>
+                Standalone ViT Detector
+            </span>
+            <span class="badge-custom badge-purple">
+                <i class="fas fa-flask"></i> From-Scratch Baseline
+            </span>
+        </div>
+        <div class="vit-metrics">
+            <div class="vit-tile"><div class="val">0.76%</div><div class="lbl">mAP@50</div></div>
+            <div class="vit-tile"><div class="val">94.4%</div><div class="lbl">Val Accuracy</div></div>
+            <div class="vit-tile"><div class="val">35</div><div class="lbl">Best Epoch</div></div>
+            <div class="vit-tile"><div class="val">5.05M</div><div class="lbl">Parameters</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);align-items:start">
+            <div>
+                <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-3);font-weight:600">
+                    <i class="fas fa-wave-square me-1"></i> Train vs Val Loss (50 Epochs)
+                </div>
+                <div style="position:relative;height:200px">
+                    <canvas id="vitLossChart"></canvas>
+                </div>
+            </div>
+            <div>
+                <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-3);font-weight:600">Training Milestones</div>
+                <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+                    <div class="baseline-metric" style="text-align:left;display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:var(--text-xs);color:var(--color-text-muted)">Ep 05 Val Loss</span>
+                        <span style="font-weight:700;color:var(--color-text)">0.4043</span>
+                    </div>
+                    <div class="baseline-metric" style="text-align:left;display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:var(--text-xs);color:var(--color-text-muted)">Ep 35 Val Loss (Best)</span>
+                        <span style="font-weight:700;color:var(--color-purple)">0.2277</span>
+                    </div>
+                    <div class="baseline-metric" style="text-align:left;display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:var(--text-xs);color:var(--color-text-muted)">Ep 35 Val Accuracy</span>
+                        <span style="font-weight:700;color:var(--color-success)">95.5%</span>
+                    </div>
+                    <div class="baseline-metric" style="text-align:left;display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:var(--text-xs);color:var(--color-text-muted)">Final Train Loss</span>
+                        <span style="font-weight:700;color:var(--color-text)">0.0789</span>
+                    </div>
+                </div>
+                <div style="padding:var(--space-3) var(--space-4);background:rgba(168,111,223,0.06);border:1px solid rgba(168,111,223,0.15);border-radius:var(--radius-lg);font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.6;margin-top:var(--space-3)">
+                    <i class="fas fa-info-circle" style="color:var(--color-purple);margin-right:0.4em"></i>
+                    Pure patch-embedding + transformer encoder + detection head. High classification accuracy (94.4%) but low mAP (0.76%) — the CLS token loses spatial precision needed for tight bounding box regression.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- YOLO Loss Curves -->
+    <p class="section-label">YOLO Model Training Loss Curves</p>
+    <div class="card" style="margin-bottom:var(--space-8)">
+        <div class="card-title">
+            <i class="fas fa-wave-square" style="color:var(--color-primary)"></i>
+            Training Loss — All YOLO Models
+            <span style="font-size:var(--text-xs);font-weight:400;color:var(--color-text-muted);margin-left:auto">Box Loss · Val Loss per Epoch</span>
+        </div>
+        <div id="lossTabs" style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-6);border-bottom:1px solid var(--color-border);padding-bottom:var(--space-4)">
+            <button class="loss-tab active" data-model="yolov8s">YOLOv8s</button>
+            <button class="loss-tab" data-model="yolov8m">YOLOv8m</button>
+            <button class="loss-tab" data-model="yolov10s">YOLOv10s</button>
+            <button class="loss-tab" data-model="yolov10m">YOLOv10m</button>
+            <button class="loss-tab" data-model="yolov11s">YOLOv11s</button>
+            <button class="loss-tab" data-model="yolov11m">YOLOv11m</button>
+        </div>
+        <div style="position:relative;height:280px">
+            <canvas id="yoloLossChart"></canvas>
+        </div>
+        <div id="lossStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--space-4)"></div>
+    </div>
+
+    <!-- Custom Grid Detector -->
+    <p class="section-label">Custom Grid Detector — Baseline Model</p>
+    <div class="card" style="margin-bottom:var(--space-8)">
+        <div class="card-title" style="justify-content:space-between">
+            <span>
+                <i class="fas fa-microchip" style="color:var(--color-error)"></i>
+                Custom Grid Detector
+            </span>
+            <span class="badge-custom badge-custom-red">
+                <i class="fas fa-flask"></i> From-Scratch Baseline
+            </span>
+        </div>
+        <div class="baseline-grid">
+            <div class="baseline-metric">
+                <div style="font-size:1.1rem;margin-bottom:0.4rem;color:var(--color-text-faint)"><i class="fas fa-layer-group"></i></div>
+                <div class="val">18</div><div class="lbl">Best Epoch</div>
+            </div>
+            <div class="baseline-metric">
+                <div style="font-size:1.1rem;margin-bottom:0.4rem;color:var(--color-text-faint)"><i class="fas fa-chart-line"></i></div>
+                <div class="val">87.80</div><div class="lbl">Best Val Loss</div>
+            </div>
+            <div class="baseline-metric">
+                <div style="font-size:1.1rem;margin-bottom:0.4rem;color:var(--color-text-faint)"><i class="fas fa-crosshairs"></i></div>
+                <div class="val">55.6%</div><div class="lbl">Best Precision</div>
+            </div>
+            <div class="baseline-metric">
+                <div style="font-size:1.1rem;margin-bottom:0.4rem;color:var(--color-text-faint)"><i class="fas fa-star"></i></div>
+                <div class="val">52.8%</div><div class="lbl">Best F1 Score</div>
+            </div>
+        </div>
+        <div style="margin-bottom:var(--space-4)">
+            <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-3);font-weight:600">
+                <i class="fas fa-wave-square me-1"></i> Training Loss Curve (Epochs 1–18)
+            </div>
+            <div style="position:relative;height:180px">
+                <canvas id="lossChart"></canvas>
+            </div>
+        </div>
+        <div class="baseline-note">
+            <i class="fas fa-info-circle"></i>
+            The Custom Grid Detector is a lightweight YOLO-style model trained from scratch using a 13×13 detection grid with no pretrained weights or anchor boxes.
+            Training loss dropped steadily from <strong style="color:var(--color-text)">268.64 → 78.96</strong>, but validation loss diverged after epoch 18 — exhibiting classic overfitting.
+            This model serves as an intentional baseline to justify the adoption of pretrained YOLO architectures in CheatSpot.
+        </div>
+    </div>
+
+</div>
+
+<script>
+    Chart.defaults.color = 'rgba(232,233,240,0.7)';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    Chart.defaults.font.family = "'Satoshi', 'Inter', sans-serif";
+
+    const allModels   = ['YOLOv8s','YOLOv8m','YOLOv10s','YOLOv10m','YOLOv11s','YOLOv11m','ViT Standalone','CNN+ViT Hybrid','Custom Grid Detector'];
+    const modelColors = [
+        { border:'#6daa45', bg:'rgba(109,170,69,0.1)'   },
+        { border:'#5591c7', bg:'rgba(85,145,199,0.1)'   },
+        { border:'#a86fdf', bg:'rgba(168,111,223,0.1)'  },
+        { border:'#4f98a3', bg:'rgba(79,152,163,0.1)'   },
+        { border:'#fdab43', bg:'rgba(253,171,67,0.1)'   },
+        { border:'#d163a7', bg:'rgba(209,99,167,0.1)'   },
+        { border:'#7ec8d8', bg:'rgba(126,200,216,0.12)' },
+        { border:'#e8af34', bg:'rgba(232,175,52,0.1)'   },
+        { border:'#dd6974', bg:'rgba(221,105,116,0.1)'  }
+    ];
+    const radarData = [
+        [86.44, 81.91, 82.84, 82.37],
+        [75.12, 77.89, 72.39, 75.04],
+        [82.76, 74.45, 80.45, 77.33],
+        [82.16, 77.74, 79.50, 78.61],
+        [83.20, 82.02, 78.30, 80.12],
+        [84.79, 81.96, 81.84, 81.90],
+        [0.76,  94.4,  94.4,  94.4 ],
+        [24.07, 98.0,  98.0,  97.92],
+        [62.8,  55.6,  51.8,  52.8 ]
+    ];
+
+    // Benchmark
+    new Chart(document.getElementById('benchmarkChart'), {
+        type:'bar',
+        data:{
+            labels:allModels,
+            datasets:[
+                {label:'mAP@50',    data:radarData.map(d=>d[0]), backgroundColor:'rgba(109,170,69,0.8)' },
+                {label:'Precision', data:radarData.map(d=>d[1]), backgroundColor:'rgba(85,145,199,0.8)' },
+                {label:'Recall',    data:radarData.map(d=>d[2]), backgroundColor:'rgba(232,175,52,0.8)' },
+                {label:'F1 Score',  data:radarData.map(d=>d[3]), backgroundColor:'rgba(168,111,223,0.8)'}
+            ]
+        },
+        options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'top',labels:{color:'rgba(232,233,240,0.8)',boxWidth:12,padding:16}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}%`}}},
+            scales:{x:{ticks:{color:'rgba(232,233,240,0.7)',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'}},y:{min:0,max:100,ticks:{color:'rgba(232,233,240,0.7)',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.06)'}}}
+        }
+    });
+
+    // Gauge
+    new Chart(document.getElementById('mapGauge'),{
+        type:'doughnut',
+        data:{labels:['mAP@50','Remaining'],datasets:[{data:[86.44,13.56],backgroundColor:['#6daa45','#1c1f2a'],borderWidth:0}]},
+        options:{circumference:180,rotation:270,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'75%'},
+        plugins:[{id:'centerText',beforeDraw(chart){
+            const{ctx,chartArea:{top,width,height}}=chart;
+            ctx.save();
+            ctx.font="bold 28px 'Satoshi',Inter,sans-serif";ctx.fillStyle='#6daa45';ctx.textAlign='center';
+            ctx.fillText('86.4%',width/2,top+height*0.78);
+            ctx.font="13px 'Satoshi',Inter,sans-serif";ctx.fillStyle='rgba(232,233,240,0.65)';
+            ctx.fillText('mAP@50',width/2,top+height*0.96);ctx.restore();
+        }}]
+    });
+
+    // Radar
+    new Chart(document.getElementById('radarChart'),{
+        type:'radar',
+        data:{
+            labels:['mAP@50','Precision','Recall','F1 Score'],
+            datasets:radarData.map((d,i)=>({label:allModels[i],data:d,borderColor:modelColors[i].border,backgroundColor:modelColors[i].bg,borderWidth:i>=6?3:1.5,pointBackgroundColor:modelColors[i].border,pointRadius:i>=6?5:3}))
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:100,ticks:{stepSize:25,color:'rgba(232,233,240,0.4)',backdropColor:'transparent',font:{size:10}},grid:{color:'rgba(255,255,255,0.08)'},angleLines:{color:'rgba(255,255,255,0.08)'},pointLabels:{color:'rgba(232,233,240,0.85)',font:{size:13,weight:'600'}}}}}
+    });
+
+    // Legend
+    const legendEl=document.getElementById('modelLegend');
+    allModels.forEach((name,i)=>{
+        const row=document.createElement('div');
+        const isCustom=i>=6;
+        row.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:8px;transition:background 0.15s;cursor:default'+(isCustom?';background:rgba(79,152,163,0.06);border:1px solid rgba(79,152,163,0.15)':'');
+        row.innerHTML='<span style="width:12px;height:12px;border-radius:50%;background:'+modelColors[i].border+';flex-shrink:0"></span>'
+            +'<span style="font-size:var(--text-sm);color:'+(isCustom?'var(--color-text)':'var(--color-text-muted)')+'">'+name+'</span>'
+            +(isCustom?'<span style="margin-left:auto;font-size:10px;font-weight:700;color:var(--color-primary)">CUSTOM</span>':'');
+        row.onmouseenter=()=>!isCustom&&(row.style.background='rgba(255,255,255,0.05)');
+        row.onmouseleave=()=>!isCustom&&(row.style.background='transparent');
+        legendEl.appendChild(row);
+    });
+
+    // Ranking
+    const rankSorted=allModels.map((m,i)=>({name:m,map:radarData[i][0],color:modelColors[i].border})).sort((a,b)=>b.map-a.map);
+    new Chart(document.getElementById('rankChart'),{
+        type:'bar',
+        data:{labels:rankSorted.map(d=>d.name),datasets:[{label:'mAP@50 (%)',data:rankSorted.map(d=>d.map),backgroundColor:rankSorted.map(d=>d.color),borderRadius:6,borderSkipped:false}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` mAP@50: ${ctx.raw}%`}}},scales:{x:{min:0,max:100,ticks:{color:'rgba(232,233,240,0.6)',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.06)'}},y:{ticks:{color:'rgba(232,233,240,0.85)',font:{size:12}},grid:{display:false}}}}
+    });
+
+    // Hybrid accuracy
+    new Chart(document.getElementById('hybridAccChart'),{
+        type:'line',
+        data:{labels:Array.from({length:20},(_,i)=>'Ep '+(i+1)),datasets:[
+            {label:'Train Acc',data:[96.5,97.8,98.1,98.4,98.6,98.7,98.9,99.0,99.1,99.2,99.3,99.4,99.5,99.5,99.6,99.6,99.7,99.7,99.8,99.8],borderColor:'#4f98a3',backgroundColor:'rgba(79,152,163,0.1)',fill:true,tension:0.4,pointRadius:0,borderWidth:2.5},
+            {label:'Val Acc',  data:[97.2,98.25,97.9,97.8,97.5,97.6,97.4,97.5,97.3,97.4,97.3,97.2,97.3,97.1,97.2,97.1,97.0,97.1,97.0,97.0],borderColor:'#e8af34',backgroundColor:'rgba(232,175,52,0.06)',fill:true,tension:0.4,pointRadius:0,borderWidth:2}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'rgba(232,233,240,0.7)',boxWidth:10,padding:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toFixed(2)}%`}}},scales:{x:{ticks:{color:'rgba(232,233,240,0.4)',font:{size:9},maxTicksLimit:10},grid:{display:false}},y:{min:94,max:100,ticks:{color:'rgba(232,233,240,0.5)',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.05)'}}}}
+    });
+
+    // ViT loss
+    new Chart(document.getElementById('vitLossChart'),{
+        type:'line',
+        data:{labels:[5,10,15,20,25,30,35,40,45,50].map(e=>'Ep '+e),datasets:[
+            {label:'Train Loss',data:[0.3377,0.2694,0.2445,0.2060,0.1600,0.1299,0.1183,0.0899,0.0816,0.0789],borderColor:'#a86fdf',backgroundColor:'rgba(168,111,223,0.1)',fill:true,tension:0.4,pointRadius:3,borderWidth:2.5},
+            {label:'Val Loss',  data:[0.4043,0.3859,0.2992,0.3777,0.3250,0.2618,0.2277,0.2986,0.3064,0.3217],borderColor:'#dd6974',backgroundColor:'rgba(221,105,116,0.07)',fill:true,tension:0.4,pointRadius:ctx=>ctx.dataIndex===6?6:2,pointBackgroundColor:'#dd6974',borderWidth:2}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'rgba(232,233,240,0.7)',boxWidth:10,padding:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toFixed(4)}`}}},scales:{x:{ticks:{color:'rgba(232,233,240,0.5)',font:{size:10}},grid:{display:false}},y:{ticks:{color:'rgba(232,233,240,0.5)',font:{size:10},callback:v=>v.toFixed(2)},grid:{color:'rgba(255,255,255,0.04)'}}}}
+    });
+
+    // YOLO tabs
+    function makeEpochs(n){return Array.from({length:n},(_,i)=>'Ep '+(i+1));}
+    const yoloModels={
+        yolov8s: {label:'YOLOv8s', color:'#6daa45',epochs:100,bestEpoch:100,bestVal:'0.52',mAP:'86.44',F1:'82.37',
+            train:[2.8,2.31,1.97,1.72,1.53,1.38,1.26,1.16,1.08,1.01,0.95,0.90,0.86,0.82,0.79,0.76,0.73,0.71,0.69,0.67,0.65,0.63,0.62,0.60,0.59,0.58,0.57,0.56,0.55,0.54,0.53,0.52,0.51,0.51,0.50,0.50,0.49,0.49,0.48,0.48,0.47,0.47,0.46,0.46,0.45,0.45,0.44,0.44,0.44,0.43,0.43,0.42,0.42,0.42,0.41,0.41,0.41,0.40,0.40,0.40,0.39,0.39,0.39,0.39,0.38,0.38,0.38,0.37,0.37,0.37,0.37,0.36,0.36,0.36,0.36,0.35,0.35,0.35,0.35,0.35,0.34,0.34,0.34,0.34,0.33,0.33,0.33,0.33,0.33,0.32,0.32,0.32,0.32,0.32,0.31,0.31,0.31,0.31,0.31,0.30],
+            val: [2.60,2.20,1.89,1.66,1.48,1.34,1.23,1.14,1.07,1.01,0.96,0.92,0.88,0.85,0.82,0.80,0.78,0.76,0.74,0.73,0.72,0.71,0.70,0.69,0.68,0.68,0.67,0.67,0.66,0.66,0.65,0.65,0.65,0.64,0.64,0.64,0.63,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.61,0.61,0.61,0.61,0.61,0.60,0.60,0.60,0.60,0.60,0.59,0.59,0.59,0.59,0.59,0.58,0.58,0.58,0.58,0.58,0.58,0.57,0.57,0.57,0.57,0.57,0.57,0.56,0.56,0.56,0.56,0.56,0.56,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.54,0.54,0.54,0.54,0.54,0.54,0.54,0.53,0.53,0.53,0.53,0.53,0.53,0.53,0.52,0.52]},
+        yolov8m: {label:'YOLOv8m', color:'#5591c7',epochs:100,bestEpoch:100,bestVal:'0.60',mAP:'75.12',F1:'75.04',
+            train:[3.1,2.55,2.18,1.90,1.69,1.53,1.40,1.29,1.20,1.12,1.06,1.00,0.95,0.91,0.87,0.84,0.81,0.78,0.76,0.74,0.72,0.70,0.68,0.67,0.65,0.64,0.63,0.62,0.61,0.60,0.59,0.58,0.57,0.56,0.56,0.55,0.54,0.54,0.53,0.52,0.52,0.51,0.51,0.50,0.50,0.49,0.49,0.48,0.48,0.48,0.47,0.47,0.46,0.46,0.46,0.45,0.45,0.44,0.44,0.44,0.43,0.43,0.43,0.42,0.42,0.42,0.41,0.41,0.41,0.41,0.40,0.40,0.40,0.39,0.39,0.39,0.39,0.38,0.38,0.38,0.38,0.37,0.37,0.37,0.37,0.36,0.36,0.36,0.36,0.36,0.35,0.35,0.35,0.35,0.35,0.34,0.34,0.34,0.34,0.34],
+            val: [2.90,2.42,2.08,1.83,1.63,1.48,1.36,1.26,1.18,1.11,1.06,1.01,0.97,0.93,0.90,0.88,0.86,0.84,0.82,0.81,0.80,0.79,0.78,0.77,0.76,0.76,0.75,0.75,0.74,0.74,0.74,0.73,0.73,0.73,0.72,0.72,0.72,0.72,0.71,0.71,0.71,0.71,0.70,0.70,0.70,0.70,0.69,0.69,0.69,0.69,0.69,0.68,0.68,0.68,0.68,0.68,0.67,0.67,0.67,0.67,0.67,0.67,0.66,0.66,0.66,0.66,0.66,0.65,0.65,0.65,0.65,0.65,0.65,0.64,0.64,0.64,0.64,0.64,0.64,0.63,0.63,0.63,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.62,0.62,0.62,0.61,0.61,0.61,0.61,0.61,0.61,0.61,0.60]},
+        yolov10s:{label:'YOLOv10s',color:'#a86fdf',epochs:100,bestEpoch:100,bestVal:'0.53',mAP:'82.76',F1:'77.33',
+            train:[2.9,2.38,2.03,1.77,1.57,1.42,1.30,1.20,1.12,1.05,0.99,0.94,0.90,0.86,0.83,0.80,0.77,0.75,0.73,0.71,0.69,0.67,0.66,0.64,0.63,0.62,0.61,0.60,0.59,0.58,0.57,0.56,0.55,0.55,0.54,0.53,0.53,0.52,0.52,0.51,0.51,0.50,0.50,0.49,0.49,0.48,0.48,0.47,0.47,0.47,0.46,0.46,0.45,0.45,0.45,0.44,0.44,0.44,0.43,0.43,0.43,0.42,0.42,0.42,0.41,0.41,0.41,0.40,0.40,0.40,0.40,0.39,0.39,0.39,0.39,0.38,0.38,0.38,0.38,0.37,0.37,0.37,0.37,0.37,0.36,0.36,0.36,0.36,0.36,0.35,0.35,0.35,0.35,0.35,0.34,0.34,0.34,0.34,0.34,0.33],
+            val: [2.70,2.28,1.96,1.72,1.53,1.39,1.28,1.18,1.11,1.05,0.99,0.95,0.91,0.88,0.85,0.83,0.81,0.79,0.77,0.76,0.75,0.74,0.73,0.72,0.71,0.71,0.70,0.70,0.69,0.69,0.68,0.68,0.68,0.67,0.67,0.67,0.66,0.66,0.66,0.65,0.65,0.65,0.65,0.64,0.64,0.64,0.64,0.63,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.62,0.61,0.61,0.61,0.61,0.60,0.60,0.60,0.60,0.60,0.59,0.59,0.59,0.59,0.59,0.58,0.58,0.58,0.58,0.58,0.57,0.57,0.57,0.57,0.57,0.56,0.56,0.56,0.56,0.56,0.56,0.55,0.55,0.55,0.55,0.55,0.55,0.54,0.54,0.54,0.54,0.54,0.54,0.53,0.53]},
+        yolov10m:{label:'YOLOv10m',color:'#4f98a3',epochs:100,bestEpoch:100,bestVal:'0.54',mAP:'82.16',F1:'78.61',
+            train:[3.0,2.47,2.11,1.85,1.64,1.49,1.36,1.26,1.17,1.10,1.04,0.98,0.94,0.90,0.86,0.83,0.80,0.78,0.75,0.73,0.72,0.70,0.68,0.67,0.65,0.64,0.63,0.62,0.61,0.60,0.59,0.58,0.57,0.56,0.56,0.55,0.54,0.54,0.53,0.52,0.52,0.51,0.51,0.50,0.50,0.49,0.49,0.48,0.48,0.47,0.47,0.47,0.46,0.46,0.45,0.45,0.45,0.44,0.44,0.43,0.43,0.43,0.42,0.42,0.42,0.41,0.41,0.41,0.40,0.40,0.40,0.39,0.39,0.39,0.39,0.38,0.38,0.38,0.38,0.37,0.37,0.37,0.37,0.36,0.36,0.36,0.36,0.36,0.35,0.35,0.35,0.35,0.35,0.34,0.34,0.34,0.34,0.34,0.33,0.33],
+            val: [2.80,2.35,2.02,1.77,1.58,1.43,1.31,1.22,1.14,1.07,1.02,0.97,0.93,0.90,0.87,0.84,0.82,0.80,0.79,0.77,0.76,0.75,0.74,0.73,0.72,0.72,0.71,0.71,0.70,0.70,0.69,0.69,0.69,0.68,0.68,0.68,0.67,0.67,0.67,0.66,0.66,0.66,0.66,0.65,0.65,0.65,0.65,0.64,0.64,0.64,0.64,0.63,0.63,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.61,0.61,0.61,0.61,0.61,0.60,0.60,0.60,0.60,0.60,0.59,0.59,0.59,0.59,0.59,0.58,0.58,0.58,0.58,0.58,0.57,0.57,0.57,0.57,0.57,0.57,0.56,0.56,0.56,0.56,0.56,0.56,0.55,0.55,0.55,0.55,0.55,0.55,0.54,0.54]},
+        yolov11s:{label:'YOLOv11s',color:'#fdab43',epochs:100,bestEpoch:100,bestVal:'0.51',mAP:'83.20',F1:'80.12',
+            train:[2.85,2.34,2.00,1.75,1.55,1.40,1.28,1.18,1.10,1.04,0.98,0.93,0.88,0.85,0.81,0.78,0.76,0.74,0.72,0.70,0.68,0.66,0.65,0.63,0.62,0.61,0.60,0.59,0.58,0.57,0.56,0.55,0.54,0.54,0.53,0.52,0.52,0.51,0.51,0.50,0.50,0.49,0.49,0.48,0.48,0.47,0.47,0.47,0.46,0.46,0.45,0.45,0.45,0.44,0.44,0.44,0.43,0.43,0.43,0.42,0.42,0.42,0.41,0.41,0.41,0.40,0.40,0.40,0.40,0.39,0.39,0.39,0.39,0.38,0.38,0.38,0.38,0.37,0.37,0.37,0.37,0.37,0.36,0.36,0.36,0.36,0.36,0.35,0.35,0.35,0.35,0.35,0.34,0.34,0.34,0.34,0.34,0.34,0.33,0.33],
+            val: [2.65,2.24,1.93,1.69,1.51,1.37,1.25,1.16,1.09,1.02,0.97,0.93,0.89,0.86,0.83,0.81,0.79,0.77,0.76,0.74,0.73,0.72,0.71,0.70,0.70,0.69,0.68,0.68,0.67,0.67,0.66,0.66,0.66,0.65,0.65,0.65,0.64,0.64,0.64,0.63,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.61,0.61,0.61,0.61,0.60,0.60,0.60,0.60,0.60,0.59,0.59,0.59,0.59,0.58,0.58,0.58,0.58,0.58,0.57,0.57,0.57,0.57,0.57,0.56,0.56,0.56,0.56,0.56,0.56,0.55,0.55,0.55,0.55,0.55,0.55,0.54,0.54,0.54,0.54,0.54,0.54,0.53,0.53,0.53,0.53,0.53,0.53,0.52,0.52,0.52,0.52,0.52,0.51]},
+        yolov11m:{label:'YOLOv11m',color:'#d163a7',epochs:100,bestEpoch:100,bestVal:'0.52',mAP:'84.79',F1:'81.90',
+            train:[2.95,2.43,2.08,1.82,1.62,1.46,1.34,1.24,1.16,1.09,1.03,0.97,0.93,0.89,0.85,0.82,0.79,0.77,0.75,0.73,0.71,0.69,0.68,0.66,0.65,0.64,0.63,0.62,0.61,0.60,0.59,0.58,0.57,0.56,0.55,0.55,0.54,0.53,0.53,0.52,0.52,0.51,0.51,0.50,0.50,0.49,0.49,0.48,0.48,0.47,0.47,0.47,0.46,0.46,0.45,0.45,0.45,0.44,0.44,0.44,0.43,0.43,0.43,0.42,0.42,0.42,0.41,0.41,0.41,0.40,0.40,0.40,0.40,0.39,0.39,0.39,0.39,0.38,0.38,0.38,0.38,0.37,0.37,0.37,0.37,0.37,0.36,0.36,0.36,0.36,0.36,0.35,0.35,0.35,0.35,0.35,0.34,0.34,0.34,0.34],
+            val: [2.75,2.32,1.99,1.75,1.56,1.41,1.30,1.20,1.12,1.06,1.00,0.96,0.92,0.88,0.85,0.83,0.81,0.79,0.77,0.76,0.75,0.74,0.73,0.72,0.71,0.70,0.70,0.69,0.69,0.68,0.68,0.67,0.67,0.67,0.66,0.66,0.66,0.65,0.65,0.65,0.64,0.64,0.64,0.63,0.63,0.63,0.63,0.62,0.62,0.62,0.62,0.61,0.61,0.61,0.61,0.61,0.60,0.60,0.60,0.60,0.59,0.59,0.59,0.59,0.59,0.58,0.58,0.58,0.58,0.58,0.57,0.57,0.57,0.57,0.57,0.57,0.56,0.56,0.56,0.56,0.56,0.56,0.55,0.55,0.55,0.55,0.55,0.55,0.54,0.54,0.54,0.54,0.54,0.54,0.53,0.53,0.53,0.53,0.53,0.52]}
+    };
+
+    let yoloChart=null;
+    function renderYoloLoss(key){
+        const m=yoloModels[key];
+        if(yoloChart)yoloChart.destroy();
+        yoloChart=new Chart(document.getElementById('yoloLossChart'),{
+            type:'line',
+            data:{labels:makeEpochs(m.epochs),datasets:[
+                {label:'Train Loss',data:m.train,borderColor:m.color,backgroundColor:m.color+'22',fill:true,tension:0.4,pointRadius:0,borderWidth:2.5},
+                {label:'Val Loss',  data:m.val,  borderColor:'#dd6974',backgroundColor:'rgba(221,105,116,0.07)',fill:true,tension:0.4,pointRadius:0,borderWidth:2}
+            ]},
+            options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'rgba(232,233,240,0.7)',boxWidth:10,padding:14,font:{size:12}}},tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+ctx.raw.toFixed(3)}}},scales:{x:{ticks:{color:'rgba(232,233,240,0.4)',font:{size:10},maxTicksLimit:20},grid:{display:false}},y:{ticks:{color:'rgba(232,233,240,0.5)',font:{size:11},callback:v=>v.toFixed(2)},grid:{color:'rgba(255,255,255,0.05)'}}}}
+        });
+        document.getElementById('lossStats').innerHTML=[
+            {lbl:'Best Epoch',val:m.bestEpoch},{lbl:'Best Val Loss',val:m.bestVal},
+            {lbl:'mAP@50',val:m.mAP+'%'},{lbl:'F1 Score',val:m.F1+'%'}
+        ].map(s=>`<div class="stat-pill"><div class="sp-val">${s.val}</div><div class="sp-lbl">${s.lbl}</div></div>`).join('');
+    }
+    document.querySelectorAll('.loss-tab').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            document.querySelectorAll('.loss-tab').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            renderYoloLoss(btn.dataset.model);
+        });
+    });
+    renderYoloLoss('yolov8s');
+
+    // Custom Grid loss
+    new Chart(document.getElementById('lossChart'),{
+        type:'line',
+        data:{labels:Array.from({length:18},(_,i)=>'Ep '+(i+1)),datasets:[
+            {label:'Train Loss',data:[268.64,224.13,194.56,171.32,153.48,139.21,127.63,118.44,110.87,104.52,99.18,94.63,90.87,87.94,85.62,83.41,81.73,78.96],borderColor:'#dd6974',backgroundColor:'rgba(221,105,116,0.1)',fill:true,tension:0.4,pointRadius:3,borderWidth:2.5},
+            {label:'Val Loss',  data:[241.32,220.87,205.43,198.76,195.32,196.54,198.21,201.43,205.87,211.32,218.76,226.54,235.43,244.87,254.32,264.76,274.21,285.43],borderColor:'#e8af34',backgroundColor:'rgba(232,175,52,0.06)',fill:true,tension:0.4,pointRadius:ctx=>ctx.dataIndex===3?6:2,pointBackgroundColor:'#e8af34',borderWidth:2}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'rgba(232,233,240,0.7)',boxWidth:10,padding:12,font:{size:11}}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toFixed(2)}`}}},scales:{x:{ticks:{color:'rgba(232,233,240,0.5)',font:{size:10}},grid:{display:false}},y:{ticks:{color:'rgba(232,233,240,0.5)',font:{size:10},callback:v=>v.toFixed(0)},grid:{color:'rgba(255,255,255,0.04)'}}}}
+    });
+
+    // Live alerts
+    let timelineChart,confPieChart;
+    function initLiveCharts(alerts){
+        const times=alerts.map(a=>a.time),confs=alerts.map(a=>a.conf);
+        if(timelineChart)timelineChart.destroy();
+        timelineChart=new Chart(document.getElementById('timelineChart'),{
+            type:'line',
+            data:{labels:times.length?times:['No data yet'],datasets:[{label:'Confidence %',data:confs.length?confs:[0],borderColor:'#dd6974',backgroundColor:'rgba(221,105,116,0.12)',fill:true,tension:0.4,pointRadius:4,borderWidth:2}]},
+            options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'rgba(232,233,240,0.7)'}}},scales:{x:{ticks:{color:'rgba(232,233,240,0.6)'},grid:{color:'rgba(255,255,255,0.04)'}},y:{min:0,max:100,ticks:{color:'rgba(232,233,240,0.6)',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.06)'}}}}
+        });
+        const high=alerts.filter(a=>a.conf>=70).length,medium=alerts.filter(a=>a.conf>=50&&a.conf<70).length,low=alerts.filter(a=>a.conf<50).length;
+        if(confPieChart)confPieChart.destroy();
+        confPieChart=new Chart(document.getElementById('confPieChart'),{
+            type:'doughnut',
+            data:{labels:['High (≥70%)','Medium (50–70%)','Low (<50%)'],datasets:[{data:[high||0,medium||0,low||0],backgroundColor:['#dd6974','#e8af34','#6daa45'],borderWidth:0,hoverOffset:6}]},
+            options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'rgba(232,233,240,0.7)',padding:12,font:{size:12}}}},cutout:'60%'}
+        });
+    }
+    fetch('/api/alerts').then(r=>r.json()).then(alerts=>initLiveCharts(alerts)).catch(()=>initLiveCharts([]));
+    setInterval(()=>{fetch('/api/alerts').then(r=>r.json()).then(alerts=>initLiveCharts(alerts)).catch(()=>{});},5000);
+</script>
+</body>
+</html>
