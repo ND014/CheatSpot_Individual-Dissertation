@@ -194,8 +194,5 @@ You can adjust the confidence threshold from the dashboard UI or directly in cod
 
 ## Maintainer
 
-Created by Nithish.
+Created by Nithish Dhanasekar.
 
-## License
-
-Add your preferred license here.
